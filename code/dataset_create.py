@@ -11,13 +11,13 @@ from zipfile import ZipFile
 
 from model import MyDataset, autoencoder
 
-path_bousinessq = "./../data/boussinesq.nc"
-path_2dcylinder = "./../data/cylinder2d.nc"
+path_bousinessq = "../data/boussinesq.nc"
+path_2dcylinder = "../data/cylinder2d.nc"
 
 
 def fetchData():
-    if not os.path.exists("../data2"):
-        os.mkdir("../data2")
+    if not os.path.exists("../data"):
+        os.mkdir("../data")
 
         cylinderURI = "https://cgl.ethz.ch/Downloads/Data/ScientificData/cylinder2d_nc.zip"
         bousinessqURI = "https://cgl.ethz.ch/Downloads/Data/ScientificData/boussinesq2d_nc.zip"
@@ -25,11 +25,14 @@ def fetchData():
         urls = (cylinderURI, bousinessqURI)
 
         for url in urls:
-            file_name = "../data2/" + url.split('/')[-1]
+            file_name = "../data/" + url.split('/')[-1]
             print("Fetching Data ...")
             try:
                 urllib.request.urlretrieve(url,file_name)
-                ZipFile.extractall()
+
+                with ZipFile(file_name, 'r') as zipObj:
+                    zipObj.extractall("../data/")
+
             except Exception as e:
                 print(e)
             
@@ -61,14 +64,15 @@ def createDataset(dataset, value, name):
     
     np.save(name, val)
     plt.matshow(val[145])
-    plt.show()
+    # plt.show()
 
 def loadVar(file_name):
     return np.load(file_name)
 
 if __name__ == "__main__":
 
-    # fetchData()
+    fetchData()
+    print("Ran..")
 
     cylinder2D = loadDataset(path_2dcylinder)
     boussinesq = loadDataset(path_bousinessq)
@@ -78,8 +82,8 @@ if __name__ == "__main__":
     u_c = np.array(cylinder2D['u'])
     u_b = np.array(boussinesq['u'])
 
-    # createAnimation(u_c, "cylinder2d")
-    # createAnimation(u_b, "bousinessq")
+    # createAnimation(u_c, "../data/cylinder2d")
+    # createAnimation(u_b, "../data/bousinessq")
 
     createDataset(cylinder2D, 'u' ,'../data/cylinder_u')
     createDataset(cylinder2D, 'v' ,'../data/cylinder_v')
