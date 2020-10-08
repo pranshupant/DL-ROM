@@ -47,7 +47,7 @@ def createAnimation(data, name):
     ims = [[ax.imshow(data[i], animated=True)] for i in range(1, len(data))]
     
     ani = ArtistAnimation(fig, ims, interval=100 , blit=True, repeat_delay=1000)
-    # ani.save("%s.mp4"%name)
+    ani.save("%s.mp4"%name)
     writer = FFMpegWriter(fps=15, metadata=dict(artist='Me'), bitrate=1800)
     ani.save("../data/movie.mp4", writer=writer)
 
@@ -110,6 +110,7 @@ if __name__ == "__main__":
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     print(train_dataset.__len__())
+    print(train_loader.__len__())
     
     
     

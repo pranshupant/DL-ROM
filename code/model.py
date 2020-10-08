@@ -24,30 +24,37 @@ class autoencoder(nn.Module):
     def __init__(self):
         super(autoencoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 32, 4, stride=2, padding=1),  # b, 32, 32, 32
+            nn.Conv2d(1, 32, 4, stride=2, padding=1),  # b, 32, 40, 320
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 16, 16
+            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 20, 160
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 8, 8
+            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 80
             nn.BatchNorm2d(128),
+            nn.LeakyReLU(),
+            nn.Conv2d(128, 256, 4, stride=2, padding=1),  # b, 256, 5, 40
+            nn.BatchNorm2d(256),
             nn.LeakyReLU()
+
         )
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),  # b, 128, 16, 16
+            nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1),  # b, 128, 10, 80
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),  # b, 64, 20, 160
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),  # b, 64, 32, 32
+            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),  # b, 32,40,320
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(32, 1, 4, stride=2, padding=1),  # b, 1, 64, 64
+            nn.ConvTranspose2d(32, 1, 4, stride=2, padding=1),  # b, 1,80,640
             nn.BatchNorm2d(1),
             nn.Tanh()
         )
-        self.h = 6
-        self.down = nn.Linear(128*8*8, self.h)
-        self.up = nn.Linear(self.h, 128*8*8)
+        self.h = 10
+        self.down = nn.Linear(256*5*40, self.h)
+        self.up = nn.Linear(self.h, 256*5*40)
 
     def forward(self, x):
         x = self.encoder(x)
