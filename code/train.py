@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import time
-import torchvision 
+import torchvision
+from utils import to_img 
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -42,7 +43,8 @@ def validation(model,test_loader,criterion):
         feats, labels = feats.to(device), labels.to(device)
 
         outputs=model(feats)
-        out.append(outputs[0][0].detach().cpu().numpy())
+        temp=to_img(outputs)
+        out.append(temp[0][0].detach().cpu().numpy())
         loss=criterion(outputs,labels)
         avg_loss.append(loss.item())
         del feats

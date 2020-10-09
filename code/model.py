@@ -24,37 +24,43 @@ class autoencoder(nn.Module):
     def __init__(self):
         super(autoencoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, 32, 4, stride=2, padding=1),  # b, 32, 40, 320
+            nn.Conv2d(1,16, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 80
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(),
+            nn.Conv2d(16, 32, 4, stride=2, padding=1),  # b, 32, 40, 40
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 20, 160
+            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 20, 20
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 80
+            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
             nn.BatchNorm2d(128),
             nn.LeakyReLU(),
-            nn.Conv2d(128, 256, 4, stride=2, padding=1),  # b, 256, 5, 40
+            nn.Conv2d(128, 256,4, stride=2, padding=1),  # b, 256, 5, 5
             nn.BatchNorm2d(256),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
 
         )
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1),  # b, 128, 10, 80
+            nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
             nn.BatchNorm2d(128),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),  # b, 64, 20, 160
+            nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),  # b, 64, 20, 20
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),  # b, 32,40,320
+            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),  # b, 32,40,40
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(32, 1, 4, stride=2, padding=1),  # b, 1,80,640
+            nn.ConvTranspose2d(32, 16, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.BatchNorm2d(16),
+            nn.Tanh(),
+            nn.ConvTranspose2d(16, 1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
             nn.BatchNorm2d(1),
-            nn.Tanh()
+            nn.Tanh(),
         )
         self.h = 10
-        self.down = nn.Linear(256*5*40, self.h)
-        self.up = nn.Linear(self.h, 256*5*40)
+        self.down = nn.Linear(256*5*5, self.h)
+        self.up = nn.Linear(self.h, 256*5*5)
 
     def forward(self, x):
         x = self.encoder(x)
