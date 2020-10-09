@@ -1,10 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import save_image
+import os
 
-input=np.load('../data/cylinder_u.npy')
-output=np.load('../output/980.npy')
+if __name__ == '__main__':
 
-img_list=[0,100,200,300]
+    if not os.path.exists("../Images"):
+        os.mkdir("../Images")
 
-save_image(input,output,img_list)
+    i=np.load('../data/cylinder_u.npy')
+    output=np.load('../output/980.npy')
+
+    img_list=[0,100,200,300]
+
+    save_image(i,output,img_list)
