@@ -1,4 +1,6 @@
 data/
 data2/
+output/
+weights/
 .mypy_cache/
 code/__pycache__/
