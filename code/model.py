@@ -16,9 +16,9 @@ class MyDataset(data.Dataset):
     def __getitem__(self, index):
         ip = self.input[index]
         op = self.target[index]
-        x = self.transform(ip)
-        y = self.transform(op)
-        return x, y
+        # x = self.transform(ip)
+        # y = self.transform(op)
+        return ip,op
 
 class autoencoder(nn.Module):
     def __init__(self):
@@ -53,10 +53,10 @@ class autoencoder(nn.Module):
             nn.LeakyReLU(),
             nn.ConvTranspose2d(32, 16, 4, stride=2, padding=1),  # b, 16,80,80
             nn.BatchNorm2d(16),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.ConvTranspose2d(16, 1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
             nn.BatchNorm2d(1),
-            nn.Tanh(),
+            nn.Sigmoid(),
         )
         self.h = 10
         self.down = nn.Linear(256*5*5, self.h)
