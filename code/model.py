@@ -16,9 +16,9 @@ class MyDataset(data.Dataset):
     def __getitem__(self, index):
         ip = self.input[index]
         op = self.target[index]
-        # x = self.transform(ip)
-        # y = self.transform(op)
-        return ip,op
+        x = torch.tensor(ip).unsqueeze(0).float()
+        y = torch.tensor(op).unsqueeze(0).float()
+        return x,y
 
 class autoencoder(nn.Module):
     def __init__(self):
