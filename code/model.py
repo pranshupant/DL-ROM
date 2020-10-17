@@ -16,8 +16,8 @@ class MyDataset(data.Dataset):
     def __getitem__(self, index):
         ip = self.input[index]
         op = self.target[index]
-        x = torch.tensor(ip).unsqueeze(0).float()
-        y = torch.tensor(op).unsqueeze(0).float()
+        x = torch.tensor(ip.flatten()).float()
+        y = torch.tensor(op.flatten()).float()
         return x,y
 
 class autoencoder(nn.Module):
@@ -71,4 +71,44 @@ class autoencoder(nn.Module):
         x = x.view(x.shape)
         x = x.view(conv_shape)
         x = self.decoder(x)
+        return x
+
+
+class MLP(nn.Module):
+    def __init__(self):
+        super(MLP, self).__init__()
+
+        
+        self.encoder=nn.Sequential(
+            nn.Linear(640*80,4096),
+            nn.BatchNorm1d(4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024,256),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(),
+        )
+        self.h=10
+        self.down=nn.Linear(256,self.h)
+        self.up= nn.Linear(self.h,256)
+        self.decoder=nn.Sequential(
+            nn.Linear(256,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024,4096),
+            nn.BatchNorm1d(4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096,80*640),
+            nn.BatchNorm1d(80*640),
+            nn.Sigmoid(),
+        )
+    
+    def forward(self,x):
+        x=self.encoder(x)
+        x=self.down(x)
+        x=self.up(x)
+        x=self.decoder(x)
+
         return x
