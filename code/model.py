@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils import data
 from torchvision import transforms
+import torch.nn.functional as F
 
 class MyDataset(data.Dataset):
     def __init__(self, input, transform=None):
@@ -16,8 +17,8 @@ class MyDataset(data.Dataset):
     def __getitem__(self, index):
         ip = self.input[index]
         op = self.target[index]
-        x = torch.tensor(ip).unsqueeze(0).float()
-        y = torch.tensor(op).unsqueeze(0).float()
+        x = torch.tensor(ip.flatten()).float()
+        y = torch.tensor(op.flatten()).float()
         return x,y
 
 class autoencoder(nn.Module):
@@ -72,3 +73,137 @@ class autoencoder(nn.Module):
         x = x.view(conv_shape)
         x = self.decoder(x)
         return x
+
+
+class MLP(nn.Module):
+    def __init__(self):
+        super(MLP, self).__init__()
+
+        
+        self.encoder=nn.Sequential(
+            nn.Linear(640*80,4096),
+            nn.BatchNorm1d(4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024,256),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(),
+        )
+        self.h=10
+        self.down=nn.Linear(256,self.h)
+        self.up= nn.Linear(self.h,256)
+        self.decoder=nn.Sequential(
+            nn.Linear(256,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024,4096),
+            nn.BatchNorm1d(4096),
+            nn.LeakyReLU(),
+            nn.Linear(4096,80*640),
+            nn.BatchNorm1d(80*640),
+            nn.Sigmoid(),
+        )
+    
+    def forward(self,x):
+        x=self.encoder(x)
+        x=self.down(x)
+        x=self.up(x)
+        x=self.decoder(x)
+
+        return x
+
+#######################################
+
+class Downsample(nn.Module):
+    def __init__(self,in_channel,out_channel,kernel=4,stride=2,padding=1):
+        super(Downsample, self).__init__()
+        self.net=nn.Sequential(
+            nn.Conv2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding)
+            nn.BatchNorm2d(out_channel)
+        )
+
+    def forward(self,x):
+        x=self.net(x)
+        return x
+
+
+class Upsample(nn.Module):
+    def __init__(self,in_channel,out_channel,kernel=4,stride=2,padding=1):
+        super(Downsample, self).__init__()
+        self.net=nn.Sequential(
+            nn.ConvTranspose2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding)
+            nn.BatchNorm2d(out_channel)
+        )
+
+    def forward(self,x):
+        x=self.net(x)
+        return x
+
+
+
+class Unet(nn.Module):
+    def __init__(self):
+        super(Unet, self).__init__()
+        
+        #encoder
+        self.d1=Downsample(1,16,(3,4),(1,8),(1,1))
+        self.d2=Downsample(16,32)
+        self.d3=Downsample(32,64)
+        self.d4=Downsample(64,128)
+        self.d5=Downsample(128,256)
+
+        self.h = 10
+        self.down = nn.Linear(256*5*5, self.h)
+        self.up = nn.Linear(self.h, 256*5*5)
+
+        self.u1=Upsample(256,128)
+        self.u2=Upsample(128,64)
+        self.u3=Upsample(64,32)
+        self.u4=Upsample(32,16)
+        self.u5=Upsample(16,1,(3,8),(1,8),(1,0))
+
+    def forward(self,x):
+
+        down1=F.relu(self.d1(x))
+
+        down2=F.relu(self.d2(down1))
+
+        down3=F.relu(self.d3(down2))
+
+        down4=F.relu(self.d4(down3))
+
+        down5=F.relu(self.d5(down4))
+
+        conv_shape = down5.shape
+        mid = down5.view(down5.shape[0], -1)
+        mid = self.down(mid)
+        mid = self.up(mid)
+        mid = mid.view(mid.shape)
+        mid = mid.view(conv_shape)
+
+
+        cat1=torch.cat((down5,mid),axis=1)
+
+        up1=F.relu(self.u1(cat1))
+
+        cat2=torch.cat((up1,down4),axis=1)
+
+        up2=F.relu(self.u2(cat2))
+
+        cat3=torch.cat((up2,down3),axis=1)
+
+        up3=F.relu(self.u3(cat3))
+
+        cat4=torch.cat((up3,down2),axis=1)
+
+        up4=F.relu(self.u4(cat4))
+
+        cat5=torch.cat((up4,down1),axis=1)
+
+        up5=F.sigmoid(self.u5(cat5))
+
+        return up5
+
+

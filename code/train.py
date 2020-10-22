@@ -44,8 +44,8 @@ def validation(model,test_loader,criterion):
         feats, labels = feats.to(device), labels.to(device)
 
         outputs=model(feats)
-        # temp=to_img(outputs)
-        out.append(outputs[0][0].detach().cpu().numpy())
+        temp=outputs[0].detach().cpu().numpy()
+        out.append(temp.reshape(80,640))
         loss=criterion(outputs,labels)
         avg_loss.append(loss.item())
         del feats

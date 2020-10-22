@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, autoencoder
+from model import MyDataset, autoencoder,MLP
 from train import training,validation
 
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
-    model= autoencoder()
+    model= MLP()
     model=model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.1)
     criterion=nn.L1Loss()
