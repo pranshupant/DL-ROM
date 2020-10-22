@@ -37,6 +37,7 @@ if __name__ == '__main__':
 
     img_transform = transforms.Compose([
     transforms.ToTensor(),
+    transforms.RandomHorizontalFlip(p=0.5),
     transforms.Normalize([0.5], [0.5])
     ])
 
@@ -51,23 +52,26 @@ if __name__ == '__main__':
 
     model= autoencoder()
     model=model.to(device)
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    criterion=nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.1)
+    criterion=nn.L1Loss()
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
-                    factor=0.1, patience=3, verbose=False, 
-                    threshold=0.01, threshold_mode='rel', 
-                        cooldown=2, min_lr=0.000001, eps=1e-08)
+                    factor=0.1, patience=5, verbose=False, 
+                    threshold=1e-3, threshold_mode='rel', 
+                        cooldown=5, min_lr=1e-6, eps=1e-08)
 
     for epoch in range(num_epochs):
         start_time=time.time()
         print('Epoch no: ',epoch)
-        training(model,train_loader,criterion,optimizer)
+        train_loss = training(model,train_loader,criterion,optimizer)
+        # scheduler.step(epoch)
         if epoch%20==0:
             output=validation(model,val_loader,criterion)
             name='../output/'+str(epoch) +'.npy'        
             np.save(name,output)
             path='../weights/'+ str(epoch) +'.pth'
             torch.save(model.state_dict(),path)
-
+            print(optimizer)
+        
+        scheduler.step(train_loss)
         print("Time : ",time.time()-start_time)
         print('='*50)

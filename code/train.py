@@ -31,7 +31,8 @@ def training(model,train_loader,criterion,optimizer):
         del labels
         del loss
 
-    print('Train Loss: {:.4f}'.format(sum(avg_loss)/len(avg_loss)))
+    print('Train Loss: {:.6f}'.format(sum(avg_loss)/len(avg_loss)))
+    return sum(avg_loss)/len(avg_loss)
 
 
 def validation(model,test_loader,criterion):

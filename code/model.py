@@ -56,7 +56,7 @@ class autoencoder(nn.Module):
             nn.LeakyReLU(),
             nn.ConvTranspose2d(16, 1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
             nn.BatchNorm2d(1),
-            nn.Sigmoid(),
+            nn.Tanh(),
         )
         self.h = 10
         self.down = nn.Linear(256*5*5, self.h)

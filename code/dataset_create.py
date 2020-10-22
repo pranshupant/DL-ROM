@@ -55,7 +55,7 @@ def createAnimation(data, name):
 
 def createDataset(dataset, value, name):
     tdim = dataset['tdim'].shape[0]
-    t = np.arange(0, tdim, 5)
+    t = np.arange(0, tdim, 1)
     print(name)
 
     val = np.array(dataset[value][t,:,:])
