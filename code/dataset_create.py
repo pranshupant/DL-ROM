@@ -97,9 +97,6 @@ if __name__ == "__main__":
     v_velocityBousinessq = loadVar('../data/boussinesq_v.npy')
     print("Loaded variable from file: ", v_velocityBousinessq.shape)
 
-
-
-
     img_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.5], [0.5])

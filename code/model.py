@@ -20,10 +20,12 @@ class MyDataset(data.Dataset):
         ip=self.input[index]
         op=self.input[index]
 
+        # ip=np.clip(self.input[index], 0, 1)
+        # op=np.clip(self.input[index], 0, 1)
+
         x=self.transform(ip)
         y=self.transform(op)
         return x,y
-
 
 class autoencoder(nn.Module):
     def __init__(self):
@@ -43,8 +45,7 @@ class autoencoder(nn.Module):
             nn.LeakyReLU(),
             nn.Conv2d(128, 256,4, stride=2, padding=1),  # b, 256, 5, 5
             nn.BatchNorm2d(256),
-            nn.LeakyReLU(),
-
+            nn.LeakyReLU()
         )
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
@@ -60,8 +61,8 @@ class autoencoder(nn.Module):
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
             nn.ConvTranspose2d(16, 1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
-            nn.BatchNorm2d(1),
-            nn.Tanh(),
+            # nn.BatchNorm2d(1),
+            # nn.Tanh()
         )
         self.h = 10
         self.down = nn.Linear(256*5*5, self.h)
@@ -126,7 +127,7 @@ class Downsample(nn.Module):
         self.net=nn.Sequential(
             nn.Conv2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding),
             nn.BatchNorm2d(out_channel),
-            nn.ReLU(inplace=True)
+            nn.LeakyReLU(inplace=True)
         )
 
     def forward(self,x):
@@ -141,14 +142,15 @@ class Upsample(nn.Module):
             nn.ConvTranspose2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding),
             nn.BatchNorm2d(out_channel)
         )
+        self.lRelu = nn.LeakyReLU()
 
     def forward(self,x1,x2,last=False):
         x=torch.cat((x1,x2),dim=1)
         x=self.net(x)
         if last:
-            x=torch.sigmoid(x)
+            x=x
         else:
-            x=F.relu(x)
+            x=self.lRelu(x)
         return x
 
 

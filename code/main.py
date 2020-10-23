@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, autoencoder,MLP, Unet
+from model import MyDataset, autoencoder, MLP, Unet
 from train import training,validation
 
 
@@ -27,6 +27,9 @@ if __name__ == '__main__':
     if not os.path.exists("../output"):
         os.mkdir("../output")
 
+    if not os.path.exists("../input"):
+        os.mkdir("../input")
+
     if not os.path.exists("../weights"):
         os.mkdir("../weights")
 
@@ -36,8 +39,10 @@ if __name__ == '__main__':
     print('Data loaded')
 
     img_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize([0.5], [0.5])
+        transforms.ToPILImage(),
+        transforms.RandomVerticalFlip(p=0.5),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5])
     ])
 
     # batch_size = 16
@@ -58,7 +63,7 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.1, patience=5, verbose=False, 
                     threshold=1e-3, threshold_mode='rel', 
-                        cooldown=5, min_lr=1e-6, eps=1e-08)
+                        cooldown=5, min_lr=1e-3, eps=1e-08)
 
     for epoch in range(num_epochs):
         start_time=time.time()
@@ -66,9 +71,11 @@ if __name__ == '__main__':
         train_loss = training(model,train_loader,criterion,optimizer)
         # scheduler.step(epoch)
         if epoch%20==0:
-            output=validation(model,val_loader,criterion)
-            name='../output/'+str(epoch) +'.npy'        
+            inp, output=validation(model,val_loader,criterion)
+            name='../output/'+str(epoch) +'.npy' 
+            name_in='../input/'+str(epoch) +'.npy'       
             np.save(name,output)
+            np.save(name_in,inp)
             path='../weights/'+ str(epoch) +'.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)
