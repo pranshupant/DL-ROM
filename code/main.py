@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, autoencoder,MLP
+from model import MyDataset, autoencoder,MLP, Unet
 from train import training,validation
 
 
@@ -32,12 +32,11 @@ if __name__ == '__main__':
 
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    u_velocityCylinder = np.load('../data/cylinder_u.npy')
+    u_velocityCylinder = np.load('../data/cylinder_u.npy', allow_pickle=True)
     print('Data loaded')
 
     img_transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.RandomHorizontalFlip(p=0.5),
     transforms.Normalize([0.5], [0.5])
     ])
 
@@ -46,11 +45,13 @@ if __name__ == '__main__':
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
+    
     validation_dataset=MyDataset(u_velocityCylinder, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
-    model= MLP()
+
+    model= Unet()
     model=model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.1)
     criterion=nn.L1Loss()

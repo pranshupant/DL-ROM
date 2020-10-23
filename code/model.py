@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch.utils import data
 from torchvision import transforms
 import torch.nn.functional as F
+import numpy as np
+from PIL import Image
 
 class MyDataset(data.Dataset):
     def __init__(self, input, transform=None):
@@ -15,11 +17,13 @@ class MyDataset(data.Dataset):
         return self.input.shape[0]
 
     def __getitem__(self, index):
-        ip = self.input[index]
-        op = self.target[index]
-        x = torch.tensor(ip.flatten()).float()
-        y = torch.tensor(op.flatten()).float()
+        ip=self.input[index]
+        op=self.input[index]
+
+        x=self.transform(ip)
+        y=self.transform(op)
         return x,y
+
 
 class autoencoder(nn.Module):
     def __init__(self):
@@ -120,8 +124,9 @@ class Downsample(nn.Module):
     def __init__(self,in_channel,out_channel,kernel=4,stride=2,padding=1):
         super(Downsample, self).__init__()
         self.net=nn.Sequential(
-            nn.Conv2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding)
-            nn.BatchNorm2d(out_channel)
+            nn.Conv2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding),
+            nn.BatchNorm2d(out_channel),
+            nn.ReLU(inplace=True)
         )
 
     def forward(self,x):
@@ -131,14 +136,19 @@ class Downsample(nn.Module):
 
 class Upsample(nn.Module):
     def __init__(self,in_channel,out_channel,kernel=4,stride=2,padding=1):
-        super(Downsample, self).__init__()
+        super(Upsample, self).__init__()
         self.net=nn.Sequential(
-            nn.ConvTranspose2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding)
+            nn.ConvTranspose2d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding),
             nn.BatchNorm2d(out_channel)
         )
 
-    def forward(self,x):
+    def forward(self,x1,x2,last=False):
+        x=torch.cat((x1,x2),dim=1)
         x=self.net(x)
+        if last:
+            x=torch.sigmoid(x)
+        else:
+            x=F.relu(x)
         return x
 
 
@@ -158,51 +168,34 @@ class Unet(nn.Module):
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
 
-        self.u1=Upsample(256,128)
-        self.u2=Upsample(128,64)
-        self.u3=Upsample(64,32)
-        self.u4=Upsample(32,16)
-        self.u5=Upsample(16,1,(3,8),(1,8),(1,0))
+        self.u1=Upsample(512,128)
+        self.u2=Upsample(256,64)
+        self.u3=Upsample(128,32)
+        self.u4=Upsample(64,16)
+        self.u5=Upsample(32,1,(3,8),(1,8),(1,0))
 
     def forward(self,x):
 
-        down1=F.relu(self.d1(x))
-
-        down2=F.relu(self.d2(down1))
-
-        down3=F.relu(self.d3(down2))
-
-        down4=F.relu(self.d4(down3))
-
-        down5=F.relu(self.d5(down4))
+        down1=self.d1(x)
+        down2=self.d2(down1)
+        down3=self.d3(down2)
+        down4=self.d4(down3)
+        down5=self.d5(down4)
 
         conv_shape = down5.shape
         mid = down5.view(down5.shape[0], -1)
         mid = self.down(mid)
+        mid= F.relu(mid)
         mid = self.up(mid)
+        mid= F.relu(mid)
         mid = mid.view(mid.shape)
         mid = mid.view(conv_shape)
 
-
-        cat1=torch.cat((down5,mid),axis=1)
-
-        up1=F.relu(self.u1(cat1))
-
-        cat2=torch.cat((up1,down4),axis=1)
-
-        up2=F.relu(self.u2(cat2))
-
-        cat3=torch.cat((up2,down3),axis=1)
-
-        up3=F.relu(self.u3(cat3))
-
-        cat4=torch.cat((up3,down2),axis=1)
-
-        up4=F.relu(self.u4(cat4))
-
-        cat5=torch.cat((up4,down1),axis=1)
-
-        up5=F.sigmoid(self.u5(cat5))
+        up1=self.u1(down5,mid)
+        up2=self.u2(down4,up1)
+        up3=self.u3(down3,up2)
+        up4=self.u4(down2,up3)
+        up5=self.u5(down1,up4,last=True)
 
         return up5
 
