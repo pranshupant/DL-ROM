@@ -10,7 +10,7 @@ import time
 import torchvision
 from model import MyDataset, autoencoder, MLP, Unet
 from train import training,validation
-
+import warnings
 
 if __name__ == '__main__':
 
@@ -33,6 +33,7 @@ if __name__ == '__main__':
     if not os.path.exists("../weights"):
         os.mkdir("../weights")
 
+    warnings.filterwarnings('ignore')
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     u_velocityCylinder = np.load('../data/cylinder_u.npy', allow_pickle=True)
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
-    model= Unet()
+    model= autoencoder()
     model=model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.1)
     criterion=nn.L1Loss()
