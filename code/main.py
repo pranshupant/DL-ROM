@@ -40,10 +40,10 @@ if __name__ == '__main__':
     print('Data loaded')
 
     img_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomVerticalFlip(p=0.5),
+        # transforms.ToPILImage(),
+        # transforms.RandomVerticalFlip(p=0.5),
         transforms.ToTensor(),
-        transforms.Normalize([0.5], [0.5])
+        # transforms.Normalize([0.5], [0.5])
     ])
 
     # batch_size = 16
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.1, patience=5, verbose=False, 
                     threshold=1e-3, threshold_mode='rel', 
-                        cooldown=5, min_lr=1e-3, eps=1e-08)
+                        cooldown=5, min_lr=1e-4, eps=1e-08)
 
     for epoch in range(num_epochs):
         start_time=time.time()
