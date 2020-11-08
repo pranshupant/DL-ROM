@@ -49,6 +49,27 @@ class MyDataset(data.Dataset):
         y=self.transform(op)
         return x,y
 
+class LSTM_Dataset(data.Dataset):
+    def __init__(self, input, transform=None):
+
+        self.input = input[:-1]
+        self.target = input[1:]
+        self.transform = transform
+
+    def __len__(self):
+        return self.input.shape[0]
+
+    def __getitem__(self, index):
+        ip=self.input[index]
+        op=self.target[index]
+
+        # ip=np.clip(self.input[index], 0, 1)
+        # op=np.clip(self.input[index], 0, 1)
+
+        x=self.transform(ip)
+        y=self.transform(op)
+        return x,y
+
 class BasicBlock_Up(nn.Module):
   def __init__(self, in_channel,stride=1):
       super(BasicBlock_Up, self).__init__()
@@ -254,4 +275,65 @@ class Unet(nn.Module):
 
         return up5
 
+#########################################
 
+class LSTM(nn.Module):
+    def __init__(self):
+        super(LSTM ,self).__init__()
+        #lstm
+        self.lstm1 = nn.LSTM(16, 64, 2, bidirectional=False, batch_first=True)
+        self.lstm2 = nn.LSTM(64, 16, 2, bidirectional=False, batch_first=True)
+        
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1,16, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(),
+            nn.Conv2d(16, 32,4 ,stride=2, padding=1),  # b, 32, 40, 40
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 20, 20
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(),
+            nn.Conv2d(128, 256,4, stride=2, padding=1),  # b, 256, 5, 5
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(),
+        )
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 10, 10
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(128,64, 4, stride=2, padding=1),  # b, 64, 20, 20
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(64,32, 4, stride=2, padding=1),  # b, 32,40,40
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(32, 16, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(16,1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
+            nn.BatchNorm2d(1)
+            # nn.Tanh()
+        )
+        self.h = 16
+
+        self.down = nn.Linear(256*5*5, self.h)
+        self.up = nn.Linear(self.h, 256*5*5)
+
+    def forward(self, x):
+        x = self.encoder(x)
+        conv_shape = x.shape
+        x = x.view(x.shape[0], -1)
+        x = self.down(x)
+        x = x.view(x.shape[0],1,self.h)
+        x = self.lstm1(x)[0]
+        x = self.lstm2(x)[0]
+        # print(x.shape)
+        x = x.view(x.shape[0],self.h)
+        x = self.up(x)
+        x = x.view(conv_shape)
+        x = self.decoder(x)
+        return x
