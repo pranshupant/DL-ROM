@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, autoencoder, MLP, Unet
+from model import MyDataset, MLP_Dataset,autoencoder, MLP, Unet
 from train import training,validation
 import warnings
 
@@ -47,17 +47,17 @@ if __name__ == '__main__':
     ])
 
     # batch_size = 16
-    train_dataset = MyDataset(u_velocityCylinder, transform=img_transform)
+    train_dataset = MLP_Dataset(u_velocityCylinder, transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
     
-    validation_dataset=MyDataset(u_velocityCylinder, transform=img_transform)
+    validation_dataset=MLP_Dataset(u_velocityCylinder, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
-    model= autoencoder()
+    model= MLP()
     model=model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.1)
     criterion=nn.L1Loss()

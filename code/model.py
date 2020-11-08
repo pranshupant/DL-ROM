@@ -6,6 +6,28 @@ import torch.nn.functional as F
 import numpy as np
 from PIL import Image
 
+
+class MLP_Dataset(data.Dataset):
+    def __init__(self, input, transform=None):
+
+        self.input = input
+        self.target = input
+        self.transform = transform
+
+    def __len__(self):
+        return self.input.shape[0]
+
+    def __getitem__(self, index):
+        ip=self.input[index].flatten()
+        op=self.input[index].flatten()
+
+        # ip=np.clip(self.input[index], 0, 1)
+        # op=np.clip(self.input[index], 0, 1)
+
+        x=torch.from_numpy(ip).float()
+        y=torch.from_numpy(op).float()
+        return x,y
+
 class MyDataset(data.Dataset):
     def __init__(self, input, transform=None):
 
