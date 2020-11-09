@@ -52,8 +52,8 @@ class MyDataset(data.Dataset):
 class LSTM_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
 
-        self.input = input[:-1]
-        self.target = input[1:]
+        self.input = input#[:-5]
+        self.target = input#[5:]
         self.transform = transform
 
     def __len__(self):
@@ -73,7 +73,7 @@ class LSTM_Dataset(data.Dataset):
 class BasicBlock_Up(nn.Module):
   def __init__(self, in_channel,stride=1):
       super(BasicBlock_Up, self).__init__()
-      self.conv1 = nn.Conv2d(in_channel, in_channel, kernel_size=3, stride=stride,padding=1, bias=False)
+      self.conv1 = nn.Conv2d(in_channel, in_channel, kernel_size=3, stride=stride, padding=1, bias=False)
       self.bn1 = nn.BatchNorm2d(in_channel)
       self.conv2 = nn.Conv2d(in_channel, in_channel, kernel_size=3, stride=1, padding=1, bias=False)
       self.bn2 = nn.BatchNorm2d(in_channel)
@@ -281,8 +281,8 @@ class LSTM(nn.Module):
     def __init__(self):
         super(LSTM ,self).__init__()
         #lstm
-        self.lstm1 = nn.LSTM(16, 64, 2, bidirectional=False, batch_first=True)
-        self.lstm2 = nn.LSTM(64, 16, 2, bidirectional=False, batch_first=True)
+        self.lstm1 = nn.LSTM(16, 64, 3, bidirectional=False, batch_first=True)
+        self.lstm2 = nn.LSTM(64, 16, 3, bidirectional=False, batch_first=True)
         
         self.encoder = nn.Sequential(
             nn.Conv2d(1,16, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
