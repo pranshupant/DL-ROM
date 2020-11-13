@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 from PIL import Image
 
-
+#Dataset class for MLP model
 class MLP_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
 
@@ -28,6 +28,7 @@ class MLP_Dataset(data.Dataset):
         y=torch.from_numpy(op).float()
         return x,y
 
+#Dataset class for CNN Autoencoders
 class MyDataset(data.Dataset):
     def __init__(self, input, transform=None):
 
@@ -49,6 +50,7 @@ class MyDataset(data.Dataset):
         y=self.transform(op)
         return x,y
 
+#Dataset class for CNN LSTM model
 class LSTM_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
 
@@ -70,6 +72,7 @@ class LSTM_Dataset(data.Dataset):
         y=self.transform(op)
         return x,y
 
+######## Skip-Blocks FOR ResNet TYPE ARCHITECTURE ################################################
 class BasicBlock_Up(nn.Module):
   def __init__(self, in_channel,stride=1):
       super(BasicBlock_Up, self).__init__()
@@ -102,6 +105,9 @@ class BasicBlock_down(nn.Module):
       out = F.leaky_relu(out,inplace=True)
       return out
 
+###################################################################
+
+######### CNN Autoencoder model ##################################
 class autoencoder(nn.Module):
     def __init__(self):
         super(autoencoder, self).__init__()
@@ -122,6 +128,8 @@ class autoencoder(nn.Module):
             nn.BatchNorm2d(256),
             nn.LeakyReLU(),
         )
+
+        ##Decoder
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 10, 10
             nn.BatchNorm2d(128),
@@ -139,6 +147,8 @@ class autoencoder(nn.Module):
             nn.BatchNorm2d(1)
             # nn.Tanh()
         )
+
+        ##Latent space
         self.h = 10
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
@@ -154,7 +164,9 @@ class autoencoder(nn.Module):
         x = self.decoder(x)
         return x
 
+################################################################
 
+######### Simple Autoencoder ###################################
 class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
@@ -171,9 +183,13 @@ class MLP(nn.Module):
             nn.BatchNorm1d(256),
             nn.LeakyReLU(),
         )
+
+        ##Latent Space
         self.h=10
         self.down=nn.Linear(256,self.h)
         self.up= nn.Linear(self.h,256)
+
+        ##Decoder
         self.decoder=nn.Sequential(
             nn.Linear(256,1024),
             nn.BatchNorm1d(1024),
@@ -193,7 +209,9 @@ class MLP(nn.Module):
 
         return x
 
-#######################################
+#################################################
+
+########## U-NET model#############################
 
 class Downsample(nn.Module):
     def __init__(self,in_channel,out_channel,kernel=4,stride=2,padding=1):
@@ -275,15 +293,18 @@ class Unet(nn.Module):
 
         return up5
 
-#########################################
+########################################################
 
+
+############ CNN-LSTM Autoencoder ######################
 class LSTM(nn.Module):
     def __init__(self):
         super(LSTM ,self).__init__()
-        #lstm
+        #LSTM layers
         self.lstm1 = nn.LSTM(16, 64, 3, bidirectional=False, batch_first=True)
         self.lstm2 = nn.LSTM(64, 16, 3, bidirectional=False, batch_first=True)
         
+        ##Encoder
         self.encoder = nn.Sequential(
             nn.Conv2d(1,16, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
             nn.BatchNorm2d(16),
@@ -301,6 +322,8 @@ class LSTM(nn.Module):
             nn.BatchNorm2d(256),
             nn.LeakyReLU(),
         )
+
+        ##Decoder
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 10, 10
             nn.BatchNorm2d(128),
@@ -318,6 +341,8 @@ class LSTM(nn.Module):
             nn.BatchNorm2d(1)
             # nn.Tanh()
         )
+
+        ##Latent space
         self.h = 16
 
         self.down = nn.Linear(256*5*5, self.h)
@@ -337,3 +362,4 @@ class LSTM(nn.Module):
         x = x.view(conv_shape)
         x = self.decoder(x)
         return x
+########################################
