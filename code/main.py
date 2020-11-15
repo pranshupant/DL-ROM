@@ -9,8 +9,10 @@ import argparse
 import time
 import torchvision
 from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, MLP, Unet, LSTM
-from train import training,validation
+from train import training, validation
+from utils import load_transfer_learning
 import warnings
+import pdb
 
 if __name__ == '__main__':
 
@@ -61,9 +63,18 @@ if __name__ == '__main__':
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
-    #Instances of model, optimizer, criterion, scheduler
-    model= LSTM()
+    #Loading Model
+    final_model= LSTM()
+    pretrained = autoencoder()
+    PATH = "../weights/1000.pth"
+    # pdb.set_trace()
+    model = load_transfer_learning(pretrained, final_model, PATH)
+
+
     model=model.to(device)
+
+    #Instances of optimizer, criterion, scheduler
+
     optimizer = optim.Adam(model.parameters(), lr=0.1)
     criterion=nn.L1Loss()
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 

@@ -301,8 +301,8 @@ class LSTM(nn.Module):
     def __init__(self):
         super(LSTM ,self).__init__()
         #LSTM layers
-        self.lstm1 = nn.LSTM(16, 64, 3, bidirectional=False, batch_first=True)
-        self.lstm2 = nn.LSTM(64, 16, 3, bidirectional=False, batch_first=True)
+        self.lstm1 = nn.LSTM(10, 64, 3, bidirectional=False, batch_first=True)
+        self.lstm2 = nn.LSTM(64, 10, 3, bidirectional=False, batch_first=True)
         
         ##Encoder
         self.encoder = nn.Sequential(
@@ -343,7 +343,7 @@ class LSTM(nn.Module):
         )
 
         ##Latent space
-        self.h = 16
+        self.h = 10
 
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
