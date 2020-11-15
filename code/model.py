@@ -54,8 +54,8 @@ class MyDataset(data.Dataset):
 class LSTM_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
 
-        self.input = input#[:-5]
-        self.target = input#[5:]
+        self.input = input[:-100]
+        self.target = input[100:]
         self.transform = transform
 
     def __len__(self):

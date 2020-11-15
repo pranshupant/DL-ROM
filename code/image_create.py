@@ -9,7 +9,7 @@ if __name__ == '__main__':
         os.mkdir("../Images")
 
     i=np.load('../data/cylinder_u.npy')
-    output=np.load('../output/800.npy')
+    output=np.load('../output/80.npy')
 
     img_list=[0,500,1000,1500]
 
