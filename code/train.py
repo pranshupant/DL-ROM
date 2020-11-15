@@ -10,6 +10,11 @@ from utils import to_img
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def training(model,train_loader,criterion,optimizer):
+    '''
+    Training one epoch of the model 
+
+    return: Training loss of one epoch
+    '''
     model.train()
     avg_loss=[]
 
@@ -36,6 +41,11 @@ def training(model,train_loader,criterion,optimizer):
 
 
 def validation(model,test_loader,criterion):
+    '''
+    Validation for  one epoch of the model  
+
+    return: Validation loss of one epoch
+    '''
     model.eval()
     avg_loss=[]
     out=[]

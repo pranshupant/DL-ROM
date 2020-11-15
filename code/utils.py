@@ -24,3 +24,22 @@ def save_image(input,output,img_no_list):
         name='../Images/'+str(i)+'.png'
         plt.savefig(name)
         count+=1
+
+def load_transfer_learning(pretrained, model, PATH):
+
+    checkpoint = torch.load(PATH)
+    model.load_state_dict(checkpoint, strict=False)
+
+    layers = []
+
+    for param in pretrained.named_parameters():
+        layers.append(param[0])
+
+    for param in model.named_parameters():
+        if param[0] in layers:
+            param[1].requires_grad = False
+
+    # for param in model.named_parameters():
+        # print(param[1].requires_grad)
+
+    return model

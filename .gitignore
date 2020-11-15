@@ -6,3 +6,4 @@ output/
 weights/
 .mypy_cache/
 code/__pycache__/
+*.png
