@@ -4,5 +4,6 @@ input/
 data2/
 output/
 weights/
+latent/
 .mypy_cache/
 code/__pycache__/
