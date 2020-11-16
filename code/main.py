@@ -50,19 +50,17 @@ if __name__ == '__main__':
     ])
 
     # batch_size = 16
-    #Train data_loader
-    train_dataset = LSTM_Dataset(u_velocityCylinder, transform=img_transform)
+    train_dataset = MyDataset(u_velocityCylinder, transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
-    #val data_loader
-    validation_dataset=LSTM_Dataset(u_velocityCylinder, transform=img_transform)
+    
+    validation_dataset=MyDataset(u_velocityCylinder, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
-    #Instances of model, optimizer, criterion, scheduler
-    model= LSTM()
+    model= autoencoder()
     model=model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.1)
     criterion=nn.L1Loss()
@@ -79,11 +77,13 @@ if __name__ == '__main__':
         
         #Saving weights after every 20epochs
         if epoch%20==0:
-            inp, output=validation(model,val_loader,criterion)
+            inp, output,latent=validation(model,val_loader,criterion)
             name='../output/'+str(epoch) +'.npy' 
-            name_in='../input/'+str(epoch) +'.npy'       
+            name_in='../input/'+str(epoch) +'.npy'
+            name_latent='../latent/'+str(epoch)+'_latent.npy'       
             np.save(name,output)
             np.save(name_in,inp)
+            np.save(name_latent,latent)
             path='../weights/'+ str(epoch) +'.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)

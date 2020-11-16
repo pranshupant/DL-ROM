@@ -157,12 +157,12 @@ class autoencoder(nn.Module):
         x = self.encoder(x)
         conv_shape = x.shape
         x = x.view(x.shape[0], -1)
-        x = self.down(x)
-        x = self.up(x)
+        latent = self.down(x)
+        x = self.up(latent)
         x = x.view(x.shape)
         x = x.view(conv_shape)
         x = self.decoder(x)
-        return x
+        return x,latent
 
 ################################################################
 
