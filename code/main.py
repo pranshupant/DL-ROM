@@ -8,9 +8,10 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, MLP, Unet, LSTM
+from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, MLP, Unet, LSTM,LSTM_model
 from train import training,validation
 import warnings
+from utils import latent_data
 
 if __name__ == '__main__':
 
@@ -42,6 +43,9 @@ if __name__ == '__main__':
     u_velocityCylinder = np.load('../data/cylinder_u.npy', allow_pickle=True)
     print('Data loaded')
 
+    latent_X,latent_Y=latent_data('../data/latent_data.npy')
+    print(latent_X.shape,latent_Y.shape)
+
     img_transform = transforms.Compose([
         # transforms.ToPILImage(),
         # transforms.RandomVerticalFlip(p=0.5),
@@ -50,19 +54,19 @@ if __name__ == '__main__':
     ])
 
     # batch_size = 16
-    train_dataset = MyDataset(u_velocityCylinder, transform=img_transform)
+    train_dataset = LSTM_Dataset(latent_X,latent_Y,transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
     
-    validation_dataset=MyDataset(u_velocityCylinder, transform=img_transform)
+    validation_dataset=LSTM_Dataset(latent_X,latent_Y, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
-    model= autoencoder()
+    model= LSTM_model()
     model=model.to(device)
-    optimizer = optim.Adam(model.parameters(), lr=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
     criterion=nn.L1Loss()
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.1, patience=5, verbose=False, 
@@ -77,13 +81,13 @@ if __name__ == '__main__':
         
         #Saving weights after every 20epochs
         if epoch%20==0:
-            inp, output,latent=validation(model,val_loader,criterion)
+            inp, output=validation(model,val_loader,criterion)
             name='../output/'+str(epoch) +'.npy' 
             name_in='../input/'+str(epoch) +'.npy'
-            name_latent='../latent/'+str(epoch)+'_latent.npy'       
+            # name_latent='../latent/'+str(epoch)+'_latent.npy'       
             np.save(name,output)
             np.save(name_in,inp)
-            np.save(name_latent,latent)
+            # np.save(name_latent,latent)
             path='../weights/'+ str(epoch) +'.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)

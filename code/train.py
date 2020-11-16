@@ -22,7 +22,7 @@ def training(model,train_loader,criterion,optimizer):
         feats, labels = feats.to(device), labels.to(device)
         
         optimizer.zero_grad()
-        outputs,_ = model(feats)
+        outputs = model(feats)
 
         loss=criterion(outputs,labels)
 
@@ -50,16 +50,15 @@ def validation(model,test_loader,criterion):
     avg_loss=[]
     out=[]
     inp=[]
-    latent_space=[]
+    # latent_space=[]
     for batch_num, (feats, labels) in enumerate(test_loader):
         feats, labels = feats.to(device), labels.to(device)
-
-        outputs,latent=model(feats)
+        outputs=model(feats)
         temp=outputs[0].detach().cpu().numpy()
-        out.append(temp.reshape(80,640))
-        latent_space.append(latent.detach().cpu().numpy())
+        out.append(temp)
+        # latent_space.append(latent.detach().cpu().numpy())
         temp2=feats[0].detach().cpu().numpy()
-        inp.append(temp2.reshape(80,640))
+        inp.append(temp2)
         loss=criterion(outputs,labels)
         avg_loss.append(loss.item())
         del feats
@@ -69,7 +68,7 @@ def validation(model,test_loader,criterion):
     model.train()
     print('Validation Loss: {:.4f}'.format(sum(avg_loss)/len(avg_loss)))
 
-    return np.array(inp), np.array(out),np.array(latent_space)
+    return np.array(inp), np.array(out)
 
 
 

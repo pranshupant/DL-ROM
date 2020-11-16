@@ -52,10 +52,10 @@ class MyDataset(data.Dataset):
 
 #Dataset class for CNN LSTM model
 class LSTM_Dataset(data.Dataset):
-    def __init__(self, input, transform=None):
+    def __init__(self, input,output=None, transform=None):
 
         self.input = input#[:-5]
-        self.target = input#[5:]
+        self.target = output#[5:]
         self.transform = transform
 
     def __len__(self):
@@ -63,13 +63,13 @@ class LSTM_Dataset(data.Dataset):
 
     def __getitem__(self, index):
         ip=self.input[index]
-        op=self.target[index]
+        op=self.target[index][-1,:]
 
         # ip=np.clip(self.input[index], 0, 1)
         # op=np.clip(self.input[index], 0, 1)
 
-        x=self.transform(ip)
-        y=self.transform(op)
+        x=self.transform(ip).squeeze(0).float()
+        y=torch.from_numpy(op).float()
         return x,y
 
 ######## Skip-Blocks FOR ResNet TYPE ARCHITECTURE ################################################
@@ -363,3 +363,16 @@ class LSTM(nn.Module):
         x = self.decoder(x)
         return x
 ########################################
+class LSTM_model(nn.Module):
+    def __init__(self):
+        super(LSTM_model ,self).__init__()
+        #LSTM layers
+        self.lstm1 = nn.LSTM(10, 64, 3, bidirectional=False, batch_first=True)
+        self.lstm2 = nn.LSTM(64, 10, 3, bidirectional=False, batch_first=True)
+
+    def forward(self, x):
+        x = self.lstm1(x)[0]
+        x = self.lstm2(x)[0]
+        x=x[-1,:]
+        x=x[-1,:]
+        return x
