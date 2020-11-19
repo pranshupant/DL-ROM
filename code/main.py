@@ -40,11 +40,12 @@ if __name__ == '__main__':
 
     #Running the model on CUDA
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    u_velocityCylinder = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    # u_velocityCylinder = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    u_boussinesq=np.load('../data/boussinesq_u.npy',allow_pickle=True)
     print('Data loaded')
 
-    latent_X,latent_Y=latent_data('../data/latent_data.npy')
-    print(latent_X.shape,latent_Y.shape)
+    # latent_X,latent_Y=latent_data('../data/latent_data.npy')
+    # print(latent_X.shape,latent_Y.shape)
 
     img_transform = transforms.Compose([
         # transforms.ToPILImage(),
@@ -53,18 +54,18 @@ if __name__ == '__main__':
         # transforms.Normalize([0.5], [0.5])
     ])
 
-    # batch_size = 16
-    train_dataset = LSTM_Dataset(latent_X,latent_Y,transform=img_transform)
+    batch_size = 16
+    train_dataset = MyDataset(u_boussinesq,transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
     
-    validation_dataset=LSTM_Dataset(latent_X,latent_Y, transform=img_transform)
+    validation_dataset=MyDataset(u_boussinesq, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
-    model= LSTM_model()
+    model= autoencoder()
     model=model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
     criterion=nn.L1Loss()
@@ -82,13 +83,13 @@ if __name__ == '__main__':
         #Saving weights after every 20epochs
         if epoch%20==0:
             inp, output=validation(model,val_loader,criterion)
-            name='../output/'+str(epoch) +'.npy' 
-            name_in='../input/'+str(epoch) +'.npy'
+            name='../output/bous_'+str(epoch) +'.npy' 
+            name_in='../input/bous_'+str(epoch) +'.npy'
             # name_latent='../latent/'+str(epoch)+'_latent.npy'       
             np.save(name,output)
             np.save(name_in,inp)
             # np.save(name_latent,latent)
-            path='../weights/'+ str(epoch) +'.pth'
+            path='../weights/bous_'+ str(epoch) +'.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)
         

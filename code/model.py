@@ -112,46 +112,52 @@ class autoencoder(nn.Module):
     def __init__(self):
         super(autoencoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(1,16, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
+            nn.Conv2d(1,16, 3, stride=(3,1), padding=(1,1)),  # b, 16, 150, 150
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
-            nn.Conv2d(16, 32,4 ,stride=2, padding=1),  # b, 32, 40, 40
+            nn.Conv2d(16, 32,4 ,stride=2, padding=1),  # b, 32, 75, 75
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 20, 20
+            nn.Conv2d(32, 64, 4, stride=2, padding=1),  # b, 64, 36, 36
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
+            nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 18, 18
             nn.BatchNorm2d(128),
             nn.LeakyReLU(),
-            nn.Conv2d(128, 256,4, stride=2, padding=1),  # b, 256, 5, 5
+            nn.Conv2d(128, 256,4, stride=2, padding=1),  # b, 256, 9, 9
             nn.BatchNorm2d(256),
+            nn.LeakyReLU(),
+            nn.Conv2d(256, 512,4, stride=2, padding=1),  # b, 256, 4, 4
+            nn.BatchNorm2d(512),
             nn.LeakyReLU(),
         )
 
         ##Decoder
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 10, 10
+        self.decoder = nn.Sequential(          
+            nn.ConvTranspose2d(512, 256,5, stride=2, padding=1),  # b, 128, 9, 9
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 18, 18
             nn.BatchNorm2d(128),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(128,64, 4, stride=2, padding=1),  # b, 64, 20, 20
+            nn.ConvTranspose2d(128,64, 4, stride=2, padding=1),  # b, 64, 36, 36
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(64,32, 4, stride=2, padding=1),  # b, 32,40,40
+            nn.ConvTranspose2d(64,32, 5, stride=2, padding=0),  # b, 32,75,75
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(32, 16, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.ConvTranspose2d(32, 16, 4, stride=2, padding=1),  # b, 16,150,150
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(16,1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
+            nn.ConvTranspose2d(16,1, 3, stride=(3,1), padding=(0,1)),  # b, 1,150,450
             nn.BatchNorm2d(1)
             # nn.Tanh()
         )
 
         ##Latent space
         self.h = 10
-        self.down = nn.Linear(256*5*5, self.h)
-        self.up = nn.Linear(self.h, 256*5*5)
+        self.down = nn.Linear(512*4*4, self.h)
+        self.up = nn.Linear(self.h, 512*4*4)
 
     def forward(self, x):
         x = self.encoder(x)
@@ -162,7 +168,7 @@ class autoencoder(nn.Module):
         x = x.view(x.shape)
         x = x.view(conv_shape)
         x = self.decoder(x)
-        return x,latent
+        return x
 
 ################################################################
 
