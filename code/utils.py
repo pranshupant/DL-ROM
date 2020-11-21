@@ -25,6 +25,25 @@ def save_image(input,output,img_no_list):
         plt.savefig(name)
         count+=1
 
+def save_image_lstm(input,output,img_no_list):
+    '''
+    imput: np.array
+    output: np.array
+    img_no_list: a list of image_nos between 0 to 301 [0,301)
+    '''
+    count=1
+    for i in img_no_list:
+        fig=plt.figure(count)
+        plt.subplot(3, 1, 1)
+        plt.imshow(input[i])
+        plt.subplot(3, 1, 2)
+        plt.imshow(output[i])
+        plt.subplot(3, 1, 3)
+        plt.imshow(input[i+100])
+        name='../Images/lstm_b_'+str(i)+'.png'
+        plt.savefig(name)
+        count+=1
+
 def load_transfer_learning(pretrained, model, PATH):
 
     checkpoint = torch.load(PATH)
@@ -40,6 +59,6 @@ def load_transfer_learning(pretrained, model, PATH):
             param[1].requires_grad = False
 
     # for param in model.named_parameters():
-        # print(param[1].requires_grad)
+    #     print(param[0], param[1].requires_grad)
 
     return model

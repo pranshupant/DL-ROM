@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, MLP, Unet, LSTM
+from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B
 from train import training, validation
 from utils import load_transfer_learning
 import warnings
@@ -41,7 +41,8 @@ if __name__ == '__main__':
 
     #Running the model on CUDA
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    u_velocityCylinder = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    # u = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
     print('Data loaded')
 
     img_transform = transforms.Compose([
@@ -53,20 +54,21 @@ if __name__ == '__main__':
 
     # batch_size = 16
     #Train data_loader
-    train_dataset = LSTM_Dataset(u_velocityCylinder, transform=img_transform)
+    train_dataset = LSTM_Dataset(u, transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
     #val data_loader
-    validation_dataset=LSTM_Dataset(u_velocityCylinder, transform=img_transform)
+    validation_dataset=LSTM_Dataset(u, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
     #Loading Model
-    final_model= LSTM()
-    pretrained = autoencoder()
-    PATH = "../weights/1000.pth"
+    final_model= LSTM_B()
+    pretrained = autoencoder_B()
+    # PATH = "../weights/1000.pth"
+    PATH = "../weights/bous_500.pth"
     # pdb.set_trace()
     model = load_transfer_learning(pretrained, final_model, PATH)
 
