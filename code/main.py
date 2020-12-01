@@ -10,7 +10,7 @@ import time
 import torchvision
 from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B
 from train import training, validation
-from utils import load_transfer_learning
+from utils import load_transfer_learning, insert_time_channel
 import warnings
 import pdb
 
@@ -41,9 +41,11 @@ if __name__ == '__main__':
 
     #Running the model on CUDA
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    # u = np.load('../data/cylinder_u.npy', allow_pickle=True)
-    u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
+    u = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
     print('Data loaded')
+
+    # u = insert_time_channel(u, 10)
 
     img_transform = transforms.Compose([
         # transforms.ToPILImage(),
@@ -55,7 +57,7 @@ if __name__ == '__main__':
     # batch_size = 16
     #Train data_loader
     train_dataset = LSTM_Dataset(u, transform=img_transform)
-    train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
+    train_loader_args = dict(batch_size=batch_size, shuffle=False, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
     
     #val data_loader
@@ -65,12 +67,16 @@ if __name__ == '__main__':
 
 
     #Loading Model
-    final_model= LSTM_B()
-    pretrained = autoencoder_B()
-    # PATH = "../weights/1000.pth"
-    PATH = "../weights/bous_500.pth"
-    # pdb.set_trace()
-    model = load_transfer_learning(pretrained, final_model, PATH)
+    TL = True
+    if TL:
+        final_model = LSTM()
+        pretrained = autoencoder()
+        PATH = "../weights/1000.pth"
+        # PATH = "../weights/bous_500.pth"
+        # pdb.set_trace()
+        model = load_transfer_learning(pretrained, final_model, PATH)
+    else:
+        model = LSTM()
 
 
     model=model.to(device)
@@ -97,7 +103,7 @@ if __name__ == '__main__':
             name_in='../input/'+str(epoch) +'.npy'       
             np.save(name,output)
             np.save(name_in,inp)
-            path='../weights/'+ str(epoch) +'.pth'
+            path='../weights/'+ str(epoch) +'_t.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)
         

@@ -62,3 +62,9 @@ def load_transfer_learning(pretrained, model, PATH):
     #     print(param[0], param[1].requires_grad)
 
     return model
+
+def insert_time_channel(data, channels):
+    data_new = np.reshape(data[:(int(1501/channels)*channels),...],
+        (-1, channels, data.shape[1], data.shape[2]))
+    print('Time Channel Inserted')
+    return data_new

@@ -54,8 +54,8 @@ class MyDataset(data.Dataset):
 class LSTM_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
 
-        self.input = input[:-100]
-        self.target = input[100:]
+        self.input = input[:-10]
+        self.target = input[10:]
         self.transform = transform
 
     def __len__(self):
@@ -64,6 +64,29 @@ class LSTM_Dataset(data.Dataset):
     def __getitem__(self, index):
         ip=self.input[index]
         op=self.target[index]
+
+        # ip=np.clip(self.input[index], 0, 1)
+        # op=np.clip(self.input[index], 0, 1)
+
+        x=self.transform(ip)
+        y=self.transform(op)
+        return x,y
+
+class LSTM_Time_Dataset(data.Dataset):
+    def __init__(self, input, transform=None):
+
+        self.input = input[:-100]
+        self.target = input[100:]
+        self.transform = transform
+        self.hm1 = {i:range(i, i+10) for i in range(data.shape[0]-10)}
+        self.hm2 = {i:range(i, i+10) for i in range(1, data.shape[0]-9)}
+
+    def __len__(self):
+        return self.input.shape[0]
+
+    def __getitem__(self, index):
+        ip=self.input[self.hm1[index]]
+        op=self.target[self.hm2[index]]
 
         # ip=np.clip(self.input[index], 0, 1)
         # op=np.clip(self.input[index], 0, 1)
@@ -364,8 +387,9 @@ class LSTM(nn.Module):
     def __init__(self):
         super(LSTM ,self).__init__()
         #LSTM layers
-        self.lstm1 = nn.LSTM(10, 64, 3, bidirectional=False, batch_first=True)
-        self.lstm2 = nn.LSTM(64, 10, 3, bidirectional=False, batch_first=True)
+        self.lstm1 = nn.GRU(10, 32, 2, bidirectional=False, batch_first=True)
+        self.lstm2 = nn.GRU(32, 10, 2, bidirectional=False, batch_first=True)
+        # self.lstm3 = nn.GRU(64, 10, 2, bidirectional=False, batch_first=True)
         
         ##Encoder
         self.encoder = nn.Sequential(
@@ -415,12 +439,16 @@ class LSTM(nn.Module):
         x = self.encoder(x)
         conv_shape = x.shape
         x = x.view(x.shape[0], -1)
+        # print(x.size())
         x = self.down(x)
-        x = x.view(x.shape[0],1,self.h)
+        # print(x.size())
+        x = x.view(1,x.shape[0],self.h)
+        # print(x.size())
         x = self.lstm1(x)[0]
         x = self.lstm2(x)[0]
+        # x = self.lstm3(x)[0]
         # print(x.shape)
-        x = x.view(x.shape[0],self.h)
+        x = x.view(conv_shape[0],self.h)
         x = self.up(x)
         x = x.view(conv_shape)
         x = self.decoder(x)

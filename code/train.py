@@ -56,11 +56,11 @@ def validation(model,test_loader,criterion):
 
         outputs=model(feats)
         temp=outputs[0].detach().cpu().numpy()
-        # out.append(temp.reshape(80,640))
-        out.append(temp.reshape(450, 150))
+        out.append(temp.reshape(80,640))
+        # out.append(temp.reshape(450, 150))
         temp2=feats[0].detach().cpu().numpy()
-        # inp.append(temp2.reshape(80,640))
-        inp.append(temp2.reshape(450, 150))
+        inp.append(temp2.reshape(80,640))
+        # inp.append(temp2.reshape(450, 150))
         loss=criterion(outputs,labels)
         avg_loss.append(loss.item())
         del feats
