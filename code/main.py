@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
 
     #Loading Model
-    TL = True
+    TL = False
     if TL:
         final_model = LSTM()
         pretrained = autoencoder()
@@ -76,7 +76,7 @@ if __name__ == '__main__':
         # pdb.set_trace()
         model = load_transfer_learning(pretrained, final_model, PATH)
     else:
-        model = LSTM()
+        model = autoencoder()
 
 
     model=model.to(device)

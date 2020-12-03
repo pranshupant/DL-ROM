@@ -150,8 +150,20 @@ class autoencoder(nn.Module):
 
         ##Latent space
         self.h = 10
-        self.down = nn.Linear(256*5*5, self.h)
-        self.up = nn.Linear(self.h, 256*5*5)
+
+        self.down=nn.Sequential(
+            nn.Linear(256*5*5,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024, self.h)
+        )
+
+        self.up=nn.Sequential(
+            nn.Linear(self.h,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024,256*5*5)
+        )
 
     def forward(self, x):
         x = self.encoder(x)
@@ -408,8 +420,19 @@ class LSTM(nn.Module):
         ##Latent space
         self.h = 10
 
-        self.down = nn.Linear(256*5*5, self.h)
-        self.up = nn.Linear(self.h, 256*5*5)
+        self.down=nn.Sequential(
+            nn.Linear(256*5*5,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024, self.h)
+        )
+
+        self.up=nn.Sequential(
+            nn.Linear(self.h,1024),
+            nn.BatchNorm1d(1024),
+            nn.LeakyReLU(),
+            nn.Linear(1024,256*5*5)
+        )
 
     def forward(self, x):
         x = self.encoder(x)
