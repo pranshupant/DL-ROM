@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B
+from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D
 from train import training, validation
 from utils import load_transfer_learning, insert_time_channel
 import warnings
@@ -41,11 +41,13 @@ if __name__ == '__main__':
 
     #Running the model on CUDA
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    u = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    u = np.load('../data/cylinder_u.npy', allow_pickle=True)[:-1, ...]
+    # print(u.shape[0])
     # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
     print('Data loaded')
 
     # u = insert_time_channel(u, 10)
+    # print(u.shape);
 
     img_transform = transforms.Compose([
         # transforms.ToPILImage(),
@@ -56,18 +58,20 @@ if __name__ == '__main__':
 
     # batch_size = 16
     #Train data_loader
-    train_dataset = LSTM_Dataset(u, transform=img_transform)
-    train_loader_args = dict(batch_size=batch_size, shuffle=False, num_workers=4)
+    train_dataset = AE_3D_Dataset(u, transform=img_transform)
+    train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
+
+    # print(len(train_loader))
     
     #val data_loader
-    validation_dataset=LSTM_Dataset(u, transform=img_transform)
+    validation_dataset = AE_3D_Dataset(u, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
 
     #Loading Model
-    TL = True
+    TL = False
     if TL:
         final_model = LSTM()
         pretrained = autoencoder()
@@ -76,7 +80,7 @@ if __name__ == '__main__':
         # pdb.set_trace()
         model = load_transfer_learning(pretrained, final_model, PATH)
     else:
-        model = LSTM()
+        model = autoencoder_3D()
 
 
     model=model.to(device)
@@ -97,12 +101,14 @@ if __name__ == '__main__':
         train_loss = training(model,train_loader,criterion,optimizer)
         
         #Saving weights after every 20epochs
-        if epoch%20==0:
-            inp, output=validation(model,val_loader,criterion)
+        if epoch%200==0 and epoch !=0:
+            output=validation(model,val_loader,criterion)
             name='../output/'+str(epoch) +'.npy' 
-            name_in='../input/'+str(epoch) +'.npy'       
+            #name_in='../input/'+str(epoch) +'.npy'       
             np.save(name,output)
-            np.save(name_in,inp)
+            del output
+            # np.save(name_in,inp)
+        if epoch%20==0:
             path='../weights/'+ str(epoch) +'_t.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)

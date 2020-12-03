@@ -72,6 +72,34 @@ class LSTM_Dataset(data.Dataset):
         y=self.transform(op)
         return x,y
 
+class AE_3D_Dataset(data.Dataset):
+    def __init__(self, input, transform=None):
+        self.input = input[:-100]
+        self.target = input[100:]
+        self.transform = transform
+        self.hashmap = {i:range(i, i+100, 10) for i in range(input.shape[0] - 200)}
+        print(len(self.hashmap))
+
+    def __len__(self):
+        return len(self.hashmap)
+
+    def __getitem__(self, index):
+        idx = self.hashmap[index]
+        # print(idx)
+        idy = self.hashmap[index]
+        ip=self.input[idx]
+        op=self.target[idy]
+
+        x=self.transform(ip)
+        x=x.permute(1, 2, 0)
+        x=x.unsqueeze(0)
+
+        y=self.transform(op)
+        y=y.permute(1, 2, 0)
+        y=y.unsqueeze(0)
+        return x,y
+
+
 ######## Skip-Blocks FOR ResNet TYPE ARCHITECTURE ################################################
 class BasicBlock_Up(nn.Module):
   def __init__(self, in_channel,stride=1):
@@ -527,3 +555,67 @@ class LSTM_B(nn.Module):
         x = self.decoder(x)
         return x
 ########################################
+
+######### CNN Autoencoder model ##################################
+class autoencoder_3D(nn.Module):
+    def __init__(self):
+        super(autoencoder_3D, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 1)),  # b, 16, 80, 320
+            nn.BatchNorm3d(16),
+            nn.LeakyReLU(),
+            nn.Conv3d(16, 32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 32, 40, 40
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(),
+            nn.Conv3d(32, 64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 64, 20, 20
+            nn.BatchNorm3d(64),
+            nn.LeakyReLU(),
+            nn.Conv3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 128, 10, 10
+            nn.BatchNorm3d(128),
+            nn.LeakyReLU(),
+            nn.Conv3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 256, 5, 5
+            nn.BatchNorm3d(256),
+            nn.LeakyReLU(),
+        )
+
+        ##Decoder
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose3d(256, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 128, 10, 10
+            nn.BatchNorm3d(128),
+            nn.LeakyReLU(),
+            nn.ConvTranspose3d(128,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 64, 20, 20
+            nn.BatchNorm3d(64),
+            nn.LeakyReLU(),
+            nn.ConvTranspose3d(64,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 32,40,40
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(),
+            nn.ConvTranspose3d(32, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 16,80,80
+            nn.BatchNorm3d(16),
+            nn.LeakyReLU(),
+            nn.ConvTranspose3d(16, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)),  # b, 1,80,680
+            nn.BatchNorm3d(1)
+            # nn.Tanh()
+        )
+
+        ##Latent space
+        self.h = 10
+        self.down = nn.Linear(256*5*5, self.h)
+        self.up = nn.Linear(self.h, 256*5*5)
+
+    def forward(self, x):
+        # print(x.shape)
+        x = self.encoder(x)
+        # print(x.shape)
+        conv_shape = x.shape
+        x = x.view(x.shape[0], -1)
+        x = self.down(x)
+        x = self.up(x)
+        # print(x.shape)
+        # x = x.view(x.shape)
+        x = x.view(conv_shape)
+        # print(x.shape)
+        x = self.decoder(x)
+        # print(x.shape)
+        return x
+
+################################################################
