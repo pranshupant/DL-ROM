@@ -561,38 +561,38 @@ class autoencoder_3D(nn.Module):
     def __init__(self):
         super(autoencoder_3D, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 1)),  # b, 16, 80, 320
+            nn.Conv3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 1)),  # b, 8, 16, 80, 320
             nn.BatchNorm3d(16),
             nn.LeakyReLU(),
-            nn.Conv3d(16, 32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 32, 40, 40
+            nn.Conv3d(16, 32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 6, 32, 40, 40
             nn.BatchNorm3d(32),
             nn.LeakyReLU(),
-            nn.Conv3d(32, 64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 64, 20, 20
+            nn.Conv3d(32, 64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 4, 64, 20, 20
             nn.BatchNorm3d(64),
             nn.LeakyReLU(),
-            nn.Conv3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 128, 10, 10
+            nn.Conv3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 2, 128, 10, 10
             nn.BatchNorm3d(128),
             nn.LeakyReLU(),
-            nn.Conv3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 256, 5, 5
+            nn.Conv3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 1, 256, 5, 5
             nn.BatchNorm3d(256),
             nn.LeakyReLU(),
         )
 
         ##Decoder
         self.decoder = nn.Sequential(
-            nn.ConvTranspose3d(256, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 128, 10, 10
+            nn.ConvTranspose3d(256, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 2, 128, 10, 10
             nn.BatchNorm3d(128),
             nn.LeakyReLU(),
-            nn.ConvTranspose3d(128,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 64, 20, 20
+            nn.ConvTranspose3d(128,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 4, 64, 20, 20
             nn.BatchNorm3d(64),
             nn.LeakyReLU(),
-            nn.ConvTranspose3d(64,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 32,40,40
+            nn.ConvTranspose3d(64,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 6, 32,40,40
             nn.BatchNorm3d(32),
             nn.LeakyReLU(),
-            nn.ConvTranspose3d(32, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 16,80,80
+            nn.ConvTranspose3d(32, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)),  # b, 8, 16, 80, 80
             nn.BatchNorm3d(16),
             nn.LeakyReLU(),
-            nn.ConvTranspose3d(16, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)),  # b, 1,80,680
+            nn.ConvTranspose3d(16, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)),  # b, 10, 1, 80, 680
             nn.BatchNorm3d(1)
             # nn.Tanh()
         )
