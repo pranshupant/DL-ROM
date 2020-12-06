@@ -8,7 +8,7 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D
+from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D,UNet_3D
 from train import training, validation
 from utils import load_transfer_learning, insert_time_channel
 import warnings
@@ -90,7 +90,7 @@ if __name__ == '__main__':
         # pdb.set_trace()
         model = load_transfer_learning(pretrained, final_model, PATH)
     else:
-        model = autoencoder_3D()
+        model = UNet_3D()
 
     model=model.to(device)
 

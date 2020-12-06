@@ -619,3 +619,83 @@ class autoencoder_3D(nn.Module):
         return x
 
 ################################################################
+
+############# UNet_3D #########################################
+
+class Downsample_3d(nn.Module):
+    def __init__(self,in_channel,out_channel,kernel,stride,padding=(0,1,1)):
+        super(Downsample_3d, self).__init__()
+        self.net=nn.Sequential(
+            nn.Conv3d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding),
+            nn.BatchNorm3d(out_channel),
+            nn.LeakyReLU(inplace=True)
+        )
+
+    def forward(self,x):
+        x=self.net(x)
+        return x
+
+
+class Upsample_3d(nn.Module):
+    def __init__(self,in_channel,out_channel,kernel,stride,padding=(0,1,1)):
+        super(Upsample_3d, self).__init__()
+        self.net=nn.Sequential(
+            nn.ConvTranspose3d(in_channel,out_channel,kernel_size=kernel,stride=stride,padding=padding),
+            nn.BatchNorm3d(out_channel)
+        )
+        self.lRelu = nn.LeakyReLU()
+
+    def forward(self,x1,x2,last=False):
+        x=torch.cat((x1,x2),dim=1)
+        x=self.net(x)
+        if last:
+            x=x
+        else:
+            x=self.lRelu(x)
+        return x
+
+class UNet_3D(nn.Module):
+    def __init__(self):
+        super(UNet_3D, self).__init__()
+        
+        #encoder
+        self.d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 1))
+        self.d2=Downsample_3d(16, 32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.d3=Downsample_3d(32, 64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.d4=Downsample_3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.d5=Downsample_3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+
+        self.h = 10
+        self.down = nn.Linear(256*5*5, self.h)
+        self.up = nn.Linear(self.h, 256*5*5)
+
+        self.u1=Upsample_3d(256, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1) #2,10,10
+        self.u2=Upsample_3d(128,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #4,20,20
+        self.u3=Upsample_3d(64,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #6,40,40
+        self.u4=Upsample_3d(32, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #8,80,80
+        self.u5=Upsample_3d(16, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #10,80,640
+
+    def forward(self,x):
+
+        down1=self.d1(x)
+        down2=self.d2(down1)
+        down3=self.d3(down2)
+        down4=self.d4(down3)
+        down5=self.d5(down4)
+
+        conv_shape = down5.shape
+        mid = down5.view(down5.shape[0], -1)
+        mid = self.down(mid)
+        mid= F.relu(mid)
+        mid = self.up(mid)
+        mid= F.relu(mid)
+        mid = mid.view(mid.shape)
+        mid = mid.view(conv_shape)
+
+        up1=self.u1(down5,mid)
+        up2=self.u2(down4,up1)
+        up3=self.u3(down3,up2)
+        up4=self.u4(down2,up3)
+        up5=self.u5(down1,up4,last=True)
+
+        return up5
