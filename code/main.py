@@ -46,6 +46,12 @@ if __name__ == '__main__':
     # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
     print('Data loaded')
 
+    #train/val split
+    train_to_val = 0.8
+
+    u_train = u[:train_to_val*u.shape[0], ...]
+    u_validation = u[train_to_val*u.shape[0]:, ...]
+
     # u = insert_time_channel(u, 10)
     # print(u.shape);
 
@@ -58,17 +64,16 @@ if __name__ == '__main__':
 
     # batch_size = 16
     #Train data_loader
-    train_dataset = AE_3D_Dataset(u, transform=img_transform)
+    train_dataset = AE_3D_Dataset(u_train, transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
 
     # print(len(train_loader))
     
     #val data_loader
-    validation_dataset = AE_3D_Dataset(u, transform=img_transform)
+    validation_dataset = AE_3D_Dataset(u_validation, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
-
 
     #Loading Model
     TL = False
