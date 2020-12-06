@@ -598,7 +598,7 @@ class autoencoder_3D(nn.Module):
         )
 
         ##Latent space
-        self.h = 10
+        self.h = 32
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
 
