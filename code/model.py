@@ -669,11 +669,11 @@ class UNet_3D(nn.Module):
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
 
-        self.u1=Upsample_3d(256, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1) #2,10,10
-        self.u2=Upsample_3d(128,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #4,20,20
-        self.u3=Upsample_3d(64,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #6,40,40
-        self.u4=Upsample_3d(32, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #8,80,80
-        self.u5=Upsample_3d(16, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #10,80,640
+        self.u1=Upsample_3d(512, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.u2=Upsample_3d(256,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.u3=Upsample_3d(128,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) 
+        self.u4=Upsample_3d(64, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) 
 
     def forward(self,x):
 

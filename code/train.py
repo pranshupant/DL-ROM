@@ -23,7 +23,6 @@ def training(model,train_loader,criterion,optimizer):
         
         optimizer.zero_grad()
         outputs = model(feats)
-
         loss=criterion(outputs,labels)
 
         loss.backward()
