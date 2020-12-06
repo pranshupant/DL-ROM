@@ -46,6 +46,17 @@ if __name__ == '__main__':
     # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
     print('Data loaded')
 
+    #train/val split
+    train_to_val = 0.85
+    # rand_array = np.random.permutation(1500)
+    # print(rand_array)
+
+    u_train = u[:int(train_to_val*u.shape[0]), ...]
+    u_validation = u[int(train_to_val*u.shape[0]):, ...]
+
+    print(u_train.shape)
+    print(u_validation.shape)
+
     # u = insert_time_channel(u, 10)
     # print(u.shape);
 
@@ -58,17 +69,16 @@ if __name__ == '__main__':
 
     # batch_size = 16
     #Train data_loader
-    train_dataset = AE_3D_Dataset(u, transform=img_transform)
+    train_dataset = AE_3D_Dataset(u_train, transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
 
     # print(len(train_loader))
     
     #val data_loader
-    validation_dataset = AE_3D_Dataset(u, transform=img_transform)
+    validation_dataset = AE_3D_Dataset(u_validation, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
-
 
     #Loading Model
     TL = False
@@ -82,7 +92,6 @@ if __name__ == '__main__':
     else:
         model = autoencoder_3D()
 
-
     model=model.to(device)
 
     #Instances of optimizer, criterion, scheduler
@@ -92,7 +101,7 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.1, patience=5, verbose=False, 
                     threshold=1e-3, threshold_mode='rel', 
-                        cooldown=5, min_lr=1e-4, eps=1e-08)
+                        cooldown=5, min_lr=1e-5, eps=1e-08)
 
     #Epoch loop
     for epoch in range(num_epochs):
@@ -101,13 +110,14 @@ if __name__ == '__main__':
         train_loss = training(model,train_loader,criterion,optimizer)
         
         #Saving weights after every 20epochs
-        if epoch%200==0 and epoch !=0:
+        if epoch%50==0 and epoch !=0:
             output=validation(model,val_loader,criterion)
             name='../output/'+str(epoch) +'.npy' 
             #name_in='../input/'+str(epoch) +'.npy'       
             np.save(name,output)
             del output
             # np.save(name_in,inp)
+
         if epoch%20==0:
             path='../weights/'+ str(epoch) +'_t.pth'
             torch.save(model.state_dict(),path)
