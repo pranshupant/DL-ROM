@@ -13,6 +13,8 @@ from model import MyDataset, autoencoder
 
 path_bousinessq = "../data/boussinesq.nc"
 path_2dcylinder = "../data/cylinder2d.nc"
+path_noaa_1990 = "../data/sst.wkmean.1981-1989.nc"
+path_noaa_present="../data/sst.wkmean.1990-present.nc"
 
 
 def fetchData():
@@ -66,6 +68,13 @@ def createDataset(dataset, value, name):
     plt.matshow(val[145])
     # plt.show()
 
+def createDataset_NOAA(dataset1,dataset2,value,name):
+    data1 = np.array(dataset1[value][:])
+    data2 = np.array(dataset2[value][:])
+
+    combined_data=np.concatenate([data1,data2])
+    np.save(name,combined_data)
+
 def loadVar(file_name):
     return np.load(file_name)
 
@@ -76,6 +85,8 @@ if __name__ == "__main__":
 
     cylinder2D = loadDataset(path_2dcylinder)
     boussinesq = loadDataset(path_bousinessq)
+    noaa_1990 = loadDataset(path_noaa_1990)
+    noaa_present = loadDataset(path_noaa_present) 
     print(cylinder2D)
     print(boussinesq)
 
@@ -91,11 +102,17 @@ if __name__ == "__main__":
     createDataset(boussinesq, 'u' ,'../data/boussinesq_u')
     createDataset(boussinesq, 'v' ,'../data/boussinesq_v')
 
+    createDataset_NOAA(noaa_1990,noaa_present, 'sst' , '../data/sea_surface_noaa')
+
     u_velocityCylinder = loadVar('../data/cylinder_u.npy')
     print("Loaded variable from file: ", u_velocityCylinder.shape)
 
     v_velocityBousinessq = loadVar('../data/boussinesq_v.npy')
     print("Loaded variable from file: ", v_velocityBousinessq.shape)
+
+    sst = loadVar('../data/sea_surface_noaa.npy')
+    print("Loaded variable from file: ", sst.shape)
+
 
     img_transform = transforms.Compose([
     transforms.ToTensor(),
