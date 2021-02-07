@@ -62,7 +62,7 @@ def validation(model,test_loader,criterion):
         avg_loss.append(loss.item())
         del feats
         del temp
-        del temp2
+        # del temp2
         del labels
     model.train()
     print('Validation Loss: {:.4f}'.format(sum(avg_loss)/len(avg_loss)))
