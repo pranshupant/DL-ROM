@@ -759,5 +759,5 @@ class Embedding(nn.Module):
         x = x.view(conv_shape)
         x = self.decoder(x)
 
-        hidden=hidden.reshape(-1,self.embed_size)
+        hidden=hidden.reshape(-1,11,self.embed_size)
         return x,hidden

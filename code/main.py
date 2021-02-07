@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     #Instances of optimizer, criterion, scheduler
 
-    optimizer = optim.Adam(model.parameters(), lr=0.05)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion=nn.MSELoss()
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.5, patience=2, verbose=False, 
