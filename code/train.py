@@ -22,7 +22,7 @@ def training(model,train_loader,criterion,optimizer):
         feats, labels = feats.to(device), labels.to(device)
         
         optimizer.zero_grad()
-        outputs = model(feats)
+        outputs, hidden = model(feats)
         loss=criterion(outputs,labels)
 
         loss.backward()
@@ -53,11 +53,11 @@ def validation(model,test_loader,criterion):
     for batch_num, (feats, labels) in enumerate(test_loader):
         feats, labels = feats.to(device), labels.to(device)
 
-        outputs=model(feats)
-        temp=outputs[0].detach().cpu().numpy()
-        out.append(temp.reshape(-1, 180,360))
-        temp2=feats[0].detach().cpu().numpy()
-        inp.append(temp2.reshape(-1, 180,360))
+        outputs, hidden=model(feats)
+        temp=hidden[0].detach().cpu().numpy()
+        out.append(temp)
+        # temp2=feats[0].detach().cpu().numpy()
+        # inp.append(temp2.reshape(-1, 180,360))
         loss=criterion(outputs,labels)
         avg_loss.append(loss.item())
         del feats

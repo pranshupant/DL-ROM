@@ -74,10 +74,10 @@ class LSTM_Dataset(data.Dataset):
 
 class AE_3D_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
-        self.input = input[:-100]
-        self.target = input[100:]
+        self.input = input
+        self.target = input
         self.transform = transform
-        self.hashmap = {i:range(i, i+100, 10) for i in range(input.shape[0] - 200)}
+        self.hashmap = {i:range(i, i+110, 10) for i in range(input.shape[0] -110)}
         print(len(self.hashmap))
 
     def __len__(self):
@@ -92,11 +92,11 @@ class AE_3D_Dataset(data.Dataset):
 
         x=self.transform(ip)
         x=x.permute(1, 2, 0)
-        x=x.unsqueeze(0)
+        # x=x.unsqueeze(0)
 
         y=self.transform(op)
         y=y.permute(1, 2, 0)
-        y=y.unsqueeze(0)
+        # y=y.unsqueeze(0)
         return x,y
 
 
@@ -699,3 +699,65 @@ class UNet_3D(nn.Module):
         up5=self.u5(down1,up4,last=True)
 
         return up5
+
+
+
+
+class Embedding(nn.Module):
+    def __init__(self):
+        super(Embedding, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(11,11, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            nn.Conv2d(11,11,4 ,stride=2, padding=1),  # b, 32, 40, 40
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            nn.Conv2d(11, 11, 4, stride=2, padding=1),  # b, 64, 20, 20
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            # nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
+            # nn.BatchNorm2d(128),
+            # nn.LeakyReLU(),
+            # nn.Conv2d(128, 256,4, stride=2, padding=1),  # b, 256, 5, 5
+            # nn.BatchNorm2d(256),
+            # nn.LeakyReLU(),
+        )
+
+        ##Decoder
+        self.decoder = nn.Sequential(
+            # nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 10, 10
+            # nn.BatchNorm2d(128),
+            # nn.LeakyReLU(),
+            # nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 64, 20, 20
+            # nn.BatchNorm2d(11),
+            # nn.LeakyReLU(),
+            nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 32,40,40
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(11, 11, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(11,11, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
+            nn.BatchNorm2d(11)
+            # nn.Tanh()
+        )
+
+        ##Latent space
+        self.embed_size=256
+        self.h = 11*self.embed_size
+        self.down = nn.Linear(11*400, self.h)
+        self.up = nn.Linear(self.h, 11*400)
+
+    def forward(self, x):
+        x = self.encoder(x)
+        conv_shape = x.shape
+        x = x.view(x.shape[0], -1)
+        hidden = self.down(x)
+        x = self.up(hidden)
+        x = x.view(x.shape)
+        x = x.view(conv_shape)
+        x = self.decoder(x)
+
+        hidden=hidden.reshape(-1,self.embed_size)
+        return x,hidden
