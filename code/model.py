@@ -659,21 +659,21 @@ class UNet_3D(nn.Module):
         super(UNet_3D, self).__init__()
         
         #encoder
-        self.d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 1))
-        self.d2=Downsample_3d(16, 32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
-        self.d3=Downsample_3d(32, 64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
-        self.d4=Downsample_3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
-        self.d5=Downsample_3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
+        self.d1=Downsample_3d(1, 16, (3, 4, 4), stride=(1, 2, 4), padding=(0, 1, 0)) #16,90
+        self.d2=Downsample_3d(16, 32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 0, 0)) #44
+        self.d3=Downsample_3d(32, 64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #22 
+        self.d4=Downsample_3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 0, 0)) #10
+        self.d5=Downsample_3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #5
 
         self.h = 10
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
 
-        self.u1=Upsample_3d(512, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
-        self.u2=Upsample_3d(256,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
-        self.u3=Upsample_3d(128,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) 
-        self.u4=Upsample_3d(64, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1))
-        self.u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) 
+        self.u1=Upsample_3d(512, 128,(2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #10
+        self.u2=Upsample_3d(256,64, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 0, 0)) #22
+        self.u3=Upsample_3d(128,32, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #44
+        self.u4=Upsample_3d(64, 16, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 0, 0)) #90
+        self.u5=Upsample_3d(32, 1, (3, 4, 4), stride=(1, 2, 4), padding=(0, 1, 0)) #190,360
 
     def forward(self,x):
 
