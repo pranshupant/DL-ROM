@@ -5,6 +5,8 @@ from torchvision import transforms
 import torch.nn.functional as F
 import numpy as np
 from PIL import Image
+import sys
+from utils import *
 
 #Dataset class for MLP model
 class MLP_Dataset(data.Dataset):
@@ -77,27 +79,79 @@ class AE_3D_Dataset(data.Dataset):
         self.input = input
         self.target = input
         self.transform = transform
-        self.hashmap = {i:range(i, i+110, 10) for i in range(input.shape[0] -110)}
-        print(len(self.hashmap))
+        # self.hashmap = {i:range(i, i+110, 10) for i in range(input.shape[0] -110)}
+        # print(len(self.hashmap))
 
     def __len__(self):
-        return len(self.hashmap)
+        return self.input.shape[0]
 
     def __getitem__(self, index):
-        idx = self.hashmap[index]
+        # idx = self.hashmap[index]
         # print(idx)
-        idy = self.hashmap[index]
-        ip=self.input[idx]
-        op=self.target[idy]
+        # idy = self.hashmap[index]
+        ip=self.input[index]
+        op=self.target[index]
 
         x=self.transform(ip)
-        x=x.permute(1, 2, 0)
+        # print(x.shape)
+        # x=x.permute(1, 2, 0)
         # x=x.unsqueeze(0)
 
         y=self.transform(op)
-        y=y.permute(1, 2, 0)
+        # y=y.permute(1, 2, 0)
         # y=y.unsqueeze(0)
         return x,y
+
+#Dataset class for Transformers
+class MyTransformerDataset(data.Dataset):
+    def __init__(self, input, transform=None):
+
+        self.input = input
+        self.transform = transform
+
+    def __len__(self):
+        return self.input.shape[0]
+
+    def __getitem__(self, index):
+        src=self.input[index][:-2]
+        tgt=self.input[index][-2]
+        label=self.input[index][-1]
+
+        # ip=np.clip(self.input[index], 0, 1)
+        # op=np.clip(self.input[index], 0, 1)
+
+        src=torch.from_numpy(src)
+        tgt=torch.from_numpy(tgt).unsqueeze(0)
+        label=torch.from_numpy(label).unsqueeze(0)
+        return src,tgt,label
+
+
+class MyDecoderDataset(data.Dataset):
+    def __init__(self, input,target=None,transform=None):
+
+        self.input = input
+        # self.target=target[100:]
+        # self.hashmap = {i:range(i, i+110, 10) for i in range(input.shape[0]-110)}
+        self.transform = transform
+
+    def __len__(self):
+        return self.input.shape[0]
+
+    def __getitem__(self, index):
+        src=self.input[index]
+        # tgt=self.hashmap[index]
+
+        # ip=np.clip(self.input[index], 0, 1)
+        # op=np.clip(self.input[index], 0, 1)
+
+        src=torch.from_numpy(src)
+
+
+        # tgt=self.transform(tgt)
+        # y=y.permute(1, 2, 0)
+
+        return src
+
 
 
 ######## Skip-Blocks FOR ResNet TYPE ARCHITECTURE ################################################
@@ -707,14 +761,14 @@ class Embedding(nn.Module):
     def __init__(self):
         super(Embedding, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(11,11, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
-            nn.BatchNorm2d(11),
+            nn.Conv2d(1,4, (3,4), stride=(1,8), padding=(1,1)),  # b, 16, 80, 320
+            nn.BatchNorm2d(4),
             nn.LeakyReLU(),
-            nn.Conv2d(11,11,4 ,stride=2, padding=1),  # b, 32, 40, 40
-            nn.BatchNorm2d(11),
+            nn.Conv2d(4,8,4 ,stride=2, padding=1),  # b, 32, 40, 40
+            nn.BatchNorm2d(8),
             nn.LeakyReLU(),
-            nn.Conv2d(11, 11, 4, stride=2, padding=1),  # b, 64, 20, 20
-            nn.BatchNorm2d(11),
+            nn.Conv2d(8, 16, 4, stride=2, padding=1),  # b, 64, 20, 20
+            nn.BatchNorm2d(16),
             nn.LeakyReLU(),
             # nn.Conv2d(64, 128, 4, stride=2, padding=1),  # b, 128, 10, 10
             # nn.BatchNorm2d(128),
@@ -732,22 +786,22 @@ class Embedding(nn.Module):
             # nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 64, 20, 20
             # nn.BatchNorm2d(11),
             # nn.LeakyReLU(),
-            nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 32,40,40
-            nn.BatchNorm2d(11),
+            nn.ConvTranspose2d(16,8, 4, stride=2, padding=1),  # b, 32,40,40
+            nn.BatchNorm2d(8),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(11, 11, 4, stride=2, padding=1),  # b, 16,80,80
-            nn.BatchNorm2d(11),
+            nn.ConvTranspose2d(8,4, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.BatchNorm2d(4),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(11,11, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
-            nn.BatchNorm2d(11)
+            nn.ConvTranspose2d(4,1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
+            nn.BatchNorm2d(1)
             # nn.Tanh()
         )
 
         ##Latent space
         self.embed_size=256
-        self.h = 11*self.embed_size
-        self.down = nn.Linear(11*400, self.h)
-        self.up = nn.Linear(self.h, 11*400)
+        self.h = self.embed_size
+        self.down = nn.Linear(16*400, self.h)
+        self.up = nn.Linear(self.h, 16*400)
 
     def forward(self, x):
         x = self.encoder(x)
@@ -759,5 +813,140 @@ class Embedding(nn.Module):
         x = x.view(conv_shape)
         x = self.decoder(x)
 
-        hidden=hidden.reshape(-1,11,self.embed_size)
+        hidden=hidden.reshape(-1,self.embed_size)
         return x,hidden
+
+
+class Transformer(nn.Module):
+    def __init__(self):
+        super(Transformer, self).__init__()
+        
+        self.transformer = nn.Transformer(d_model=256,nhead=4,num_encoder_layers=1,num_decoder_layers=1,dim_feedforward=512,dropout=0.1)
+
+    def forward(self, src, tgt):
+        out = self.transformer(src, tgt)
+
+        return out
+
+class Decode_Embedding(nn.Module):
+    def __init__(self):
+        super(Decode_Embedding, self).__init__()
+
+        
+        self.h=11*256
+        self.up = nn.Linear(self.h, 11*400)
+
+        self.decoder = nn.Sequential(
+            # nn.ConvTranspose2d(256, 128,4, stride=2, padding=1),  # b, 128, 10, 10
+            # nn.BatchNorm2d(128),
+            # nn.LeakyReLU(),
+            # nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 64, 20, 20
+            # nn.BatchNorm2d(11),
+            # nn.LeakyReLU(),
+            nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 32,40,40
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(11, 11, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.BatchNorm2d(11),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(11,11, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
+            nn.BatchNorm2d(11)
+            # nn.Tanh()
+        )
+        
+    def forward(self, x):
+        x = x.view(-1,11*256)
+        x = self.up(x)
+        x = x.view(-1,11, 20, 20)
+        x = self.decoder(x)
+        return x
+
+
+
+if __name__ == '__main__':
+    
+    device = 'cuda'
+
+    u = np.load('../output/transformer250.npy', allow_pickle=True)[:-1]
+    print(u.shape)
+
+    # sys.exit()
+
+    train_dataset = MyDecoderDataset(u, transform=None)
+    train_loader_args = dict(batch_size=1, shuffle=True, num_workers=4)
+    train_loader = data.DataLoader(train_dataset, **train_loader_args)
+
+    # model =Decode_Embedding()
+    
+
+    final_model = Decode_Embedding()
+    pretrained = Embedding()
+    PATH = "../weights/cylinder_embed_200_t.pth"
+        # PATH = "../weights/bous_500.pth"
+        # pdb.set_trace()
+    model = load_transfer_learning_TF(pretrained, final_model, PATH)
+    model=model.to(device)
+
+    out=[]
+
+    for _,(feats) in enumerate(train_loader):
+
+        feats=feats.to(device)
+
+        output=model(feats)
+
+        out.append(output[0].detach().cpu().numpy())
+
+    
+    out=np.array(out)
+    print(out.shape)
+
+    name='../output/transformer_decoder.npy'
+    np.save(name,np.array(out))
+
+
+    # u = np.load('../data/cylinder_embed_200.npy', allow_pickle=True)
+    # print(u.shape)
+    # # sys.exit()
+    # # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
+    # print('Data loaded')
+
+    # #train/val split
+    # train_to_val = 0.85
+    # # rand_array = np.random.permutation(1500)
+    # # print(rand_array)
+
+    # u_train = u[:int(train_to_val*u.shape[0]), ...]
+
+    # img_transform = transforms.Compose([
+    #     # transforms.ToPILImage(),
+    #     # transforms.RandomVerticalFlip(p=0.5),
+    #     transforms.ToTensor(),
+    #     # transforms.Normalize([0.5], [0.5])
+    # ])
+
+
+    # train_dataset = MyTransformerDataset(u, transform=img_transform)
+    # train_loader_args = dict(batch_size=11, shuffle=True, num_workers=4)
+    # train_loader = data.DataLoader(train_dataset, **train_loader_args)
+
+    # print(len(train_dataset))
+
+    # for _,(src,tgt,labels) in enumerate(train_loader):
+    #     src, tgt, labels = src.to(device), tgt.to(device), labels.to(device)
+    #     print(src.shape,tgt.shape,labels.shape)
+
+    #     src = src.permute(1,0,2)    
+    #     tgt = tgt.permute(1,0,2)
+
+    #     model = Transformer()
+    #     model=model.to(device)
+
+    #     out = model(src, tgt)
+    #     out=out.permute(1,0,2)
+    #     out=torch.squeeze(out,1)
+    #     print(out.shape)
+
+    #     break
+
+    # print(out.shape)

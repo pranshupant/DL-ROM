@@ -92,3 +92,22 @@ def insert_time_channel(data, channels):
         (-1, channels, data.shape[1], data.shape[2]))
     print('Time Channel Inserted')
     return data_new
+
+def load_transfer_learning_TF(pretrained, model, PATH):
+
+    checkpoint = torch.load(PATH)
+    model.load_state_dict(checkpoint, strict=False)
+
+    # layers = []
+
+    # for param in pretrained.named_parameters():
+    #     layers.append(param[0])
+
+    # for param in model.named_parameters():
+    #     if param[0] in layers:
+    #         param[1].requires_grad = False
+
+    # for param in model.named_parameters():
+    #     print(param[0], param[1].requires_grad)
+
+    return model

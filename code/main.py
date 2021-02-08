@@ -8,9 +8,9 @@ import os
 import argparse
 import time
 import torchvision
-from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D,UNet_3D, Embedding
-from train import training, validation
-from utils import load_transfer_learning, insert_time_channel
+from model import *
+from train import *
+from utils import *
 import warnings
 import pdb
 import sys
@@ -44,6 +44,7 @@ if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     u = np.load('../data/cylinder_u.npy', allow_pickle=True)
     # u=np.load('../data/sea_surface_noaa.npy',allow_pickle=True)
+    # u = np.load('../data/cylinder_embed_200.npy', allow_pickle=True)
     print(u.shape)
     # sys.exit()
     # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
@@ -86,12 +87,12 @@ if __name__ == '__main__':
     #Loading Model
     TL = False
     if TL:
-        final_model = LSTM()
-        pretrained = autoencoder()
-        PATH = "../weights/1000.pth"
+        final_model = Decode_Embedding()
+        pretrained = Embedding()
+        PATH = "../weights/cylinder_embed_200_t.pth"
         # PATH = "../weights/bous_500.pth"
         # pdb.set_trace()
-        model = load_transfer_learning(pretrained, final_model, PATH)
+        model = load_transfer_learning_TF(pretrained, final_model, PATH)
     else:
         model = Embedding()
 
@@ -99,7 +100,7 @@ if __name__ == '__main__':
 
     #Instances of optimizer, criterion, scheduler
 
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
     criterion=nn.MSELoss()
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.5, patience=2, verbose=False, 
@@ -115,15 +116,15 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         start_time=time.time()
         print('Epoch no: ',epoch)
-        train_loss = training(model,train_loader,criterion,optimizer)
+        train_loss = training_encoder(model,train_loader,criterion,optimizer)
         
         #Saving weights after every 20epochs
-        if epoch%50==0 and epoch !=0:
-            output=validation(model,val_loader,criterion)
-            name='../output/cylinder_embed_'+str(epoch) +'.npy' 
-            #name_in='../input/'+str(epoch) +'.npy'       
+        if epoch%50==0: #and epoch !=0:
+            output=validation_encoder(model,val_loader,criterion)
+            name='../output/transformer_embed_'+str(epoch) +'.npy' 
+            # #name_in='../input/'+str(epoch) +'.npy'       
             np.save(name,output)
-            del output
+            # del output
             # np.save(name_in,inp)
 
         if epoch%20==0:
@@ -131,6 +132,6 @@ if __name__ == '__main__':
             torch.save(model.state_dict(),path)
             print(optimizer)
         
-        scheduler.step(train_loss)
+        # scheduler.step(train_loss)
         print("Time : ",time.time()-start_time)
         print('='*50)
