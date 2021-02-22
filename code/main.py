@@ -42,9 +42,8 @@ if __name__ == '__main__':
 
     #Running the model on CUDA
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    u = np.load('../data/cylinder_u.npy', allow_pickle=True)
-    # u=np.load('../data/sea_surface_noaa.npy',allow_pickle=True)
-    # u = np.load('../data/cylinder_embed_200.npy', allow_pickle=True)
+    # u = np.load('../data/cylinder_u.npy', allow_pickle=True)
+    u=np.load('../output/transformer_embed_100.npy')
     print(u.shape)
     # sys.exit()
     # u = np.load('../data/boussinesq_u.npy', allow_pickle=True)
@@ -73,14 +72,14 @@ if __name__ == '__main__':
 
     # batch_size = 16
     #Train data_loader
-    train_dataset = AE_3D_Dataset(u, transform=img_transform)
+    train_dataset = LSTM_Dataset(u_train, transform=img_transform)
     train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
     train_loader = data.DataLoader(train_dataset, **train_loader_args)
 
     # print(len(train_loader))
     
     #val data_loader
-    validation_dataset = AE_3D_Dataset(u, transform=img_transform)
+    validation_dataset = LSTM_Dataset(u_validation, transform=img_transform)
     val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
     val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
@@ -94,14 +93,14 @@ if __name__ == '__main__':
         # pdb.set_trace()
         model = load_transfer_learning_TF(pretrained, final_model, PATH)
     else:
-        model = Embedding()
+        model = LSTM_model()
 
     model=model.to(device)
 
     #Instances of optimizer, criterion, scheduler
 
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
-    criterion=nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    criterion=nn.L1Loss()
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
                     factor=0.5, patience=2, verbose=False, 
                     threshold=1e-3, threshold_mode='rel', 
@@ -121,14 +120,14 @@ if __name__ == '__main__':
         #Saving weights after every 20epochs
         if epoch%50==0: #and epoch !=0:
             output=validation_encoder(model,val_loader,criterion)
-            name='../output/transformer_embed_'+str(epoch) +'.npy' 
-            # #name_in='../input/'+str(epoch) +'.npy'       
-            np.save(name,output)
+            print(output.shape)
+            name='../output/LSTM_embedding_'+str(epoch) +'.npy' 
+            # #name_in='../input/'+str(epoch) +'.npy'     
             # del output
             # np.save(name_in,inp)
 
         if epoch%20==0:
-            path='../weights/cylinder_embed_'+ str(epoch) +'_t.pth'
+            path='../weights/LSTM_embedding_'+ str(epoch) +'_t.pth'
             torch.save(model.state_dict(),path)
             print(optimizer)
         

@@ -22,10 +22,10 @@ def training_encoder(model,train_loader,criterion,optimizer):
 
     for batch_num, (src, labels) in enumerate(train_loader):
         src, labels = src.to(device), labels.to(device)
-        
+
         optimizer.zero_grad()
 
-        outputs,hidden = model(src)
+        outputs= model(src)
         loss=criterion(outputs,labels)
 
         loss.backward()
@@ -90,8 +90,8 @@ def validation_encoder(model,test_loader,criterion):
         src, labels = src.to(device), labels.to(device)
 
 
-        outputs,hidden = model(src)
-        temp=hidden[0].detach().cpu().numpy()
+        outputs= model(src)
+        temp=outputs[0].detach().cpu().numpy()
         out.append(temp)
         # temp2=feats[0].detach().cpu().numpy()
         # inp.append(temp2.reshape(-1, 180,360))

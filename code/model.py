@@ -56,25 +56,31 @@ class MyDataset(data.Dataset):
 class LSTM_Dataset(data.Dataset):
     def __init__(self, input, transform=None):
 
-        self.input = input#[:-5]
-        self.target = input#[5:]
+        self.input = input[:-100]
+        self.target = input[100:]
         self.transform = transform
+        self.hashmap = {i:range(i, i+100, 10) for i in range(input.shape[0] -200)}
 
     def __len__(self):
-        return self.input.shape[0]
+        return len(self.hashmap)
 
     def __getitem__(self, index):
-        ip=self.input[index]
+        idx=self.hashmap[index]
+
+        ip=self.input[idx]
         op=self.target[index]
 
-        # ip=np.clip(self.input[index], 0, 1)
-        # op=np.clip(self.input[index], 0, 1)
+        x=torch.from_numpy(ip)
 
-        x=self.transform(ip)
-        y=self.transform(op)
+        # x=x.permute(1,2,0)
+        # x=x.unsqueeze(0)
+
+        y=torch.from_numpy(op)
+        # y=y.permute(1,2,0)
+        # y=y.unsqueeze(0)
         return x,y
 
-class AE_3D_Dataset(data.Dataset):
+class Embedding_dataset(data.Dataset):
     def __init__(self, input, transform=None):
         self.input = input
         self.target = input
@@ -516,15 +522,16 @@ class LSTM_model(nn.Module):
     def __init__(self):
         super(LSTM_model ,self).__init__()
         #LSTM layers
-        self.lstm1 = nn.LSTM(10, 64, 3, bidirectional=False, batch_first=True)
-        self.lstm2 = nn.LSTM(64, 10, 3, bidirectional=False, batch_first=True)
+        self.lstm1 = nn.LSTM(256, 512, 3, bidirectional=False, batch_first=True)
+
+        self.linear=nn.Linear(512,256)
 
     def forward(self, x):
-        x = self.lstm1(x)[0]
-        x = self.lstm2(x)[0]
-        x=x[-1,:]
-        x=x[-1,:]
-        return x
+        out,(hidden,cell) = self.lstm1(x)
+        # x = self.lstm2(x)[0]
+        # x=x[-1,:]
+        out=self.linear(hidden[-1])
+        return out
 
 ############ CNN-LSTM_B Autoencoder ######################
 class LSTM_B(nn.Module):
@@ -843,14 +850,14 @@ class Decode_Embedding(nn.Module):
             # nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 64, 20, 20
             # nn.BatchNorm2d(11),
             # nn.LeakyReLU(),
-            nn.ConvTranspose2d(11,11, 4, stride=2, padding=1),  # b, 32,40,40
-            nn.BatchNorm2d(11),
+            nn.ConvTranspose2d(16,8, 4, stride=2, padding=1),  # b, 32,40,40
+            nn.BatchNorm2d(8),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(11, 11, 4, stride=2, padding=1),  # b, 16,80,80
-            nn.BatchNorm2d(11),
+            nn.ConvTranspose2d(8,4, 4, stride=2, padding=1),  # b, 16,80,80
+            nn.BatchNorm2d(4),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(11,11, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
-            nn.BatchNorm2d(11)
+            nn.ConvTranspose2d(4,1, (3,8), stride=(1,8), padding=(1,0)),  # b, 1,80,680
+            nn.BatchNorm2d(1)
             # nn.Tanh()
         )
         
