@@ -92,3 +92,22 @@ def insert_time_channel(data, channels):
         (-1, channels, data.shape[1], data.shape[2]))
     print('Time Channel Inserted')
     return data_new
+
+def conv3D_shape(input_shape, kernel, stride, padding=(0,0,0), dilation=(1,1,1)):
+    '''
+    Function to help in convolution shape calculations. Eg. print(conv2D_shape((1024, 2048), (4,4), (2,4), (1,1), (1,1)))
+    '''
+    d_in, h_in, w_in = input_shape
+    d_out = np.floor(((d_in + 2*padding[0]-dilation[0]*(kernel[0]-1)-1)/stride[0]) + 1)
+    h_out = np.floor(((h_in + 2*padding[1]-dilation[1]*(kernel[1]-1)-1)/stride[1]) + 1)
+    w_out = np.floor(((w_in + 2*padding[2]-dilation[2]*(kernel[2]-1)-1)/stride[2]) + 1)
+    
+
+    return (d_out, h_out, w_out)
+
+if __name__ == '__main__':
+
+    input_dim = torch.randn(10, 450, 150)
+    print(input_dim.shape)
+    out = conv3D_shape(input_shape=input_dim.shape,kernel=(3,5,3),stride=(1,3,1),padding=(1,2,1))
+    print(out)
