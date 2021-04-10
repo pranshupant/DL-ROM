@@ -139,7 +139,7 @@ if __name__ == '__main__':
     # print(optimizer)
 
     #Epoch loop
-    for epoch in range(num_epochs):
+    for epoch in range(num_epochs):s
         start_time=time.time()
         print('Epoch no: ',epoch)
         train_loss = training(model,train_loader,criterion,optimizer)
