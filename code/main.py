@@ -166,7 +166,8 @@ if __name__ == '__main__':
             
             scheduler.step(train_loss)
             print("Time : ",time.time()-start_time)
-            print('='*50)
+            print('='*100)
+            print()
 
         save_loss(val_loss, dataset_name)
 

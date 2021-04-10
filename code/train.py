@@ -4,6 +4,7 @@ import torch.optim as optim
 import numpy as np
 import time
 import torchvision
+from tqdm import tqdm
 from utils import to_img 
 
 
@@ -18,7 +19,7 @@ def training(model,train_loader,criterion,optimizer):
     model.train()
     avg_loss=[]
 
-    for batch_num, (feats, labels) in enumerate(train_loader):
+    for batch_num, (feats, labels) in tqdm(enumerate(train_loader), total=len(train_loader), ascii=True):
         feats, labels = feats.to(device), labels.to(device)
         
         optimizer.zero_grad()
@@ -48,7 +49,7 @@ def validation(model,test_loader,criterion):
     model.eval()
     avg_loss=[]
     
-    for batch_num, (feats, labels) in enumerate(test_loader):
+    for batch_num, (feats, labels) in tqdm(enumerate(test_loader), total=len(test_loader), ascii=True):
         feats, labels = feats.to(device), labels.to(device)
 
         outputs=model(feats)
@@ -72,7 +73,7 @@ def test(model, test_loader):
     out = []
     label = []
     
-    for batch_num, (feats, labels) in enumerate(test_loader):
+    for batch_num, (feats, labels) in tqdm(enumerate(test_loader), total=len(test_loader), ascii=True):
         feats = feats.to(device)
 
         outputs=model(feats)
