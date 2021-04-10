@@ -21,6 +21,8 @@ if __name__ == '__main__':
     parser.add_argument(dest='arg1', type=int, help="Number of Epochs")
     parser.add_argument(dest='arg2', type=int, default=16, help="Batch Size")
     parser.add_argument(dest='arg3', type=str, default='2d_cylinder', help="Name of Dataset")
+    parser.add_argument('--test', dest='testing', action='store_true')
+    parser.add_argument('--train', dest='training', action='store_true')
 
     args = parser.parse_args()
     num_epochs = args.arg1
@@ -159,3 +161,14 @@ if __name__ == '__main__':
         scheduler.step(train_loss)
         print("Time : ",time.time()-start_time)
         print('='*50)
+
+
+    if args.testing:
+
+        
+        labels, preds = test(model, test_loader)
+        name=f'../results/{dataset_name}/output/labels.npy'        
+        np.save(name, labels)
+
+        name=f'../results/{dataset_name}/output/predictions.npy'
+        np.save(name, preds)

@@ -69,6 +69,28 @@ def validation(model,test_loader,criterion):
 
     return np.array(out)
 
+def test(model, test_loader):
+    '''
+    Validation for  one epoch of the model  
+
+    return: Validation loss of one epoch
+    '''
+    model.eval()
+    out = []
+    label = []
+    
+    for batch_num, (feats, labels) in enumerate(test_loader):
+        feats = feats.to(device)
+
+        outputs=model(feats)
+        out.append(outputs[0, 0].detach().cpu().numpy()) ## Moudularize
+        label.append(labels[0, 0].numpy())
+
+        del feats
+        del labels
+
+    return np.array(label), np.array(out)
+
 
 
 
