@@ -54,6 +54,22 @@ if __name__ == '__main__':
 
     elif dataset_name == 'SST':
         u = np.load('../data/sea_surface_noaa.npy',allow_pickle=True)[:2000, ...]
+
+    elif dataset_name == '2d_cylinder_CFD':
+        # u = np.load('../data/Velocity160.npz', allow_pickle=True)
+        # u_comp = np.load('../data/Velocity160.npz', allow_pickle=True)
+        # u_flat = u_comp['arr_0']
+        # u = u_flat.reshape(u_flat.shape[0], 320, 80)
+        # u = np.transpose(u, (0, 2, 1))
+        # omega = np.load('../data/Vort160.npz', allow_pickle=True)
+
+        u_comp = np.load('../data/Velocity160.npz', allow_pickle=True)
+        u_flat = u_comp['arr_0']
+        u = u_flat.reshape(u_flat.shape[0], 320, 80)
+        u = np.transpose(u, (0, 2, 1))
+        u_new = np.zeros((u.shape[0], 80, 640))
+        u_new[..., :320] = u
+        u = u_new.astype(np.float32)
         
     else: 
         print('Dataset Not Found')
@@ -129,7 +145,7 @@ if __name__ == '__main__':
         train_loss = training(model,train_loader,criterion,optimizer)
         
         #Saving weights after every 20epochs
-        if epoch%50==0 and epoch !=0:
+        if epoch%20==0 and epoch !=0:
             output=validation(model,val_loader,criterion)
             name='../output/'+dataset_name+'_'+str(epoch) +'.npy'        
             np.save(name,output)

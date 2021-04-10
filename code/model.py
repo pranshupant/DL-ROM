@@ -684,6 +684,10 @@ class UNet_3D(nn.Module):
             #Note - Remember to crop in dataloader
             d1=Downsample_3d(1, 16, (3, 4, 4), stride=(1, 2, 4), padding=(0, 1, 0))
             u5=Upsample_3d(32,1,(3,4,4),stride=(1,2,4),padding=(0,1,0))
+
+        if name=='2d_cylinder_CFD':
+            d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
+            u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #190,360
             
 
         elif name=='Channel_flow':
