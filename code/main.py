@@ -9,37 +9,42 @@ import argparse
 import time
 import torchvision
 from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D,UNet_3D
-from train import training, validation
-from utils import load_transfer_learning, insert_time_channel
+from train import training, validation, test
+from utils import load_transfer_learning, insert_time_channel, find_weight, save_loss
 import warnings
 import pdb
+
+#python main.py 1 16 -d_set 2_cylinder --train
 
 if __name__ == '__main__':
 
     #arguments for num_epochs and batch_size
     parser = argparse.ArgumentParser()
-    parser.add_argument(dest='arg1', type=int, help="Number of Epochs")
-    parser.add_argument(dest='arg2', type=int, default=16, help="Batch Size")
-    parser.add_argument(dest='arg3', type=str, default='2d_cylinder', help="Name of Dataset")
+    parser.add_argument(dest='num_epochs', type=int, help="Number of Epochs")
+    parser.add_argument(dest='batch_size', type=int, default=16, help="Batch Size")
+    parser.add_argument('-d_set', dest='dataset', type=str, default='2d_cylinder', help="Name of Dataset")
     parser.add_argument('--test', dest='testing', action='store_true')
     parser.add_argument('--train', dest='training', action='store_true')
 
     args = parser.parse_args()
-    num_epochs = args.arg1
-    batch_size = args.arg2
-    dataset_name = args.arg3
+    num_epochs = args.num_epochs
+    batch_size = args.batch_size
+    dataset_name = args.dataset
 
     print(num_epochs, batch_size)
 
+    if not os.path.exists(f'../results/{dataset_name}'):
+        os.mkdir(f'../results/{dataset_name}')
+
     #Making folders to save reconstructed images, input images and weights
-    if not os.path.exists("../output"):
-        os.mkdir("../output")
+    if not os.path.exists(f'../results/{dataset_name}/output/'):
+        os.mkdir(f'../results/{dataset_name}/output/')
 
-    if not os.path.exists("../input"):
-        os.mkdir("../input")
+    # if not os.path.exists("../input"):
+    #     os.mkdir("../input")
 
-    if not os.path.exists("../weights"):
-        os.mkdir("../weights")
+    if not os.path.exists(f'../results/{dataset_name}/weights/'):
+        os.mkdir(f'../results/{dataset_name}/weights/')
 
     warnings.filterwarnings('ignore')
 
@@ -100,19 +105,6 @@ if __name__ == '__main__':
         # transforms.Normalize([0.5], [0.5])
     ])
 
-    # batch_size = 16
-    #Train data_loader
-    train_dataset = AE_3D_Dataset(u_train,dataset_name,transform=img_transform)
-    train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
-    train_loader = data.DataLoader(train_dataset, **train_loader_args)
-
-    # print(len(train_loader))
-    
-    #val data_loader
-    validation_dataset = AE_3D_Dataset(u_validation,dataset_name,transform=img_transform)
-    val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
-    val_loader = data.DataLoader(validation_dataset, **val_loader_args)
-
     #Loading Model
     TL = False
     
@@ -128,44 +120,65 @@ if __name__ == '__main__':
 
     model = model.to(device)
 
-    #Instances of optimizer, criterion, scheduler
+    if args.training:
+        # batch_size = 16
+        #Train data_loader
+        train_dataset = AE_3D_Dataset(u_train,dataset_name,transform=img_transform)
+        train_loader_args = dict(batch_size=batch_size, shuffle=True, num_workers=4)
+        train_loader = data.DataLoader(train_dataset, **train_loader_args)
 
-    optimizer = optim.Adam(model.parameters(), lr=0.05)
-    criterion = nn.L1Loss()
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
-                    factor=0.5, patience=2, verbose=False, 
-                    threshold=1e-3, threshold_mode='rel', 
-                        cooldown=5, min_lr=1e-5, eps=1e-08)
-
-    # model.load_state_dict(torch.load(Path))
-    # print(optimizer)
-
-    #Epoch loop
-    for epoch in range(num_epochs):s
-        start_time=time.time()
-        print('Epoch no: ',epoch)
-        train_loss = training(model,train_loader,criterion,optimizer)
+        # print(len(train_loader))
         
-        #Saving weights after every 20epochs
-        if epoch%20==0 and epoch !=0:
-            output=validation(model,val_loader,criterion)
-            name='../output/'+dataset_name+'_'+str(epoch) +'.npy'        
-            np.save(name,output)
-            del output
+        #val data_loader
+        validation_dataset = AE_3D_Dataset(u_validation,dataset_name,transform=img_transform)
+        val_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
+        val_loader = data.DataLoader(validation_dataset, **val_loader_args)
 
-        if epoch%20==0:
-            path='../weights/'+ dataset_name + '_' + str(epoch) +'_t.pth'
-            torch.save(model.state_dict(),path)
-            print(optimizer)
-        
-        scheduler.step(train_loss)
-        print("Time : ",time.time()-start_time)
-        print('='*50)
+        #Instances of optimizer, criterion, scheduler
+
+        optimizer = optim.Adam(model.parameters(), lr=0.05)
+        criterion = nn.L1Loss()
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
+                        factor=0.5, patience=2, verbose=False, 
+                        threshold=1e-3, threshold_mode='rel', 
+                            cooldown=5, min_lr=1e-5, eps=1e-08)
+
+        # model.load_state_dict(torch.load(Path))
+        # print(optimizer)
+
+        val_loss = {}
+        #Epoch loop
+        for epoch in range(num_epochs):
+            start_time=time.time()
+            print('Epoch no: ',epoch)
+            train_loss = training(model,train_loader,criterion,optimizer)
+            
+            #Saving weights after every 20epochs
+            if epoch%20==0:# and epoch !=0:
+                val_loss[epoch] = validation(model,val_loader,criterion)
+
+            if epoch%20==0:# and epoch != 0:
+                path=f'../results/{dataset_name}/weights/{epoch}.pth'
+                torch.save(model.state_dict(),path)
+                print(optimizer)
+            
+            scheduler.step(train_loss)
+            print("Time : ",time.time()-start_time)
+            print('='*50)
+
+        save_loss(val_loss, dataset_name)
 
 
     if args.testing:
 
-        
+        PATH = find_weight(dataset_name)
+
+        model.load_state_dict(torch.load(PATH))
+
+        test_dataset = AE_3D_Dataset(u_validation,dataset_name,transform=img_transform)
+        test_loader_args = dict(batch_size=1, shuffle=False, num_workers=4)
+        test_loader = data.DataLoader(test_dataset, **test_loader_args)
+
         labels, preds = test(model, test_loader)
         name=f'../results/{dataset_name}/output/labels.npy'        
         np.save(name, labels)

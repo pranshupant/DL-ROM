@@ -77,10 +77,10 @@ class AE_3D_Dataset(data.Dataset):
         if name == 'SST':
             input = input[:,10:-10,20:-20]
 
-        self.input = input[:-100]
-        self.target = input[100:]
+        self.input = input[:-10]
+        self.target = input[10:]
         self.transform = transform
-        self.hashmap = {i:range(i, i+100, 10) for i in range(input.shape[0] - 200)}
+        self.hashmap = {i:range(i, i+100, 10) for i in range(self.input.shape[0] - 100)}
         print(len(self.hashmap))
 
     def __len__(self):
@@ -664,8 +664,6 @@ class UNet_3D(nn.Module):
         super(UNet_3D, self).__init__()
         self.name=name
 
-
-        #encoder
         if name=='2d_cylinder':
             d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
             u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #190,360
@@ -679,17 +677,15 @@ class UNet_3D(nn.Module):
             u6 = nn.ConvTranspose3d(8,1,(3,6,3),stride=(1,3,1),padding=(1,0,1))
             self.u6=u6
 
-        
         elif name=='SST':
             #Note - Remember to crop in dataloader
             d1=Downsample_3d(1, 16, (3, 4, 4), stride=(1, 2, 4), padding=(0, 1, 0))
             u5=Upsample_3d(32,1,(3,4,4),stride=(1,2,4),padding=(0,1,0))
 
-        if name=='2d_cylinder_CFD':
+        elif name=='2d_cylinder_CFD':
             d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
             u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #190,360
             
-
         elif name=='Channel_flow':
             print(f'To be implemented')
         

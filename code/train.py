@@ -47,27 +47,20 @@ def validation(model,test_loader,criterion):
     '''
     model.eval()
     avg_loss=[]
-    out=[]
-    inp=[]
     
     for batch_num, (feats, labels) in enumerate(test_loader):
         feats, labels = feats.to(device), labels.to(device)
 
         outputs=model(feats)
-        temp=outputs[0].detach().cpu().numpy()
-        out.append(temp.reshape(-1, 80,640))
-        temp2=feats[0].detach().cpu().numpy()
-        # inp.append(temp2.reshape(-1, 180,360))
         loss=criterion(outputs,labels)
         avg_loss.append(loss.item())
+
         del feats
-        del temp
-        del temp2
         del labels
     model.train()
     print('Validation Loss: {:.4f}'.format(sum(avg_loss)/len(avg_loss)))
 
-    return np.array(out)
+    return (sum(avg_loss)/len(avg_loss))
 
 def test(model, test_loader):
     '''
@@ -83,8 +76,10 @@ def test(model, test_loader):
         feats = feats.to(device)
 
         outputs=model(feats)
-        out.append(outputs[0, 0].detach().cpu().numpy()) ## Moudularize
-        label.append(labels[0, 0].numpy())
+        out.append(outputs[0, 0, -1].detach().cpu().numpy()) ## Moudularize
+        label.append(labels[0, 0, -1].numpy())
+        # print(labels[0, 0, -1].numpy().shape)
+        # print(outputs[0, 0, -1].detach().cpu().numpy().shape)
 
         del feats
         del labels
