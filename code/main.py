@@ -14,7 +14,9 @@ from utils import load_transfer_learning, insert_time_channel, find_weight, save
 import warnings
 import pdb
 
-#python main.py 1 16 -d_set 2_cylinder --train
+'''
+python main.py 100 32 -d_set 2d_cylinder --train/ --test
+'''
 
 if __name__ == '__main__':
 

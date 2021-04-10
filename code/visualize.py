@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 
+#  python visualize.py -d_set 2d_cylinder -freq 50
+
 def plot_results(pred, labels, dataset_name, freq):
     assert(pred.shape == labels.shape)
 
