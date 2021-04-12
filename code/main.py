@@ -176,6 +176,8 @@ if __name__ == '__main__':
 
         PATH = find_weight(dataset_name)
 
+        print(PATH)
+
         model.load_state_dict(torch.load(PATH))
 
         test_dataset = AE_3D_Dataset(u_validation,dataset_name,transform=img_transform)

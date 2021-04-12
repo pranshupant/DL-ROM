@@ -10,11 +10,13 @@ def plot_results(pred, labels, dataset_name, freq):
 
     for i in range(0, pred.shape[0], freq):
     
-        plt.imshow(pred[i], cmap='coolwarm')
-        plt.savefig(f"../results/{dataset_name}/plots/{i}_pred.png", dpi=600)
+        plt.imshow(pred[i], cmap='RdBu')
+        plt.axis('off')
+        plt.savefig(f"../results/{dataset_name}/plots/{i}_pred.png", bbox_inches='tight', dpi=600)
 
-        plt.imshow(labels[i], cmap= 'coolwarm')
-        plt.savefig(f"../results/{dataset_name}/plots/{i}_label.png", dpi=600)
+        plt.imshow(labels[i], cmap= 'RdBu')
+        plt.axis('off')
+        plt.savefig(f"../results/{dataset_name}/plots/{i}_label.png", bbox_inches='tight',  dpi=600)
 
 if __name__ == '__main__':
 
@@ -25,6 +27,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     dataset_name = args.dset
     freq = args.freq
+
+    if not os.path.exists(f"../results/{dataset_name}"):
+        os.mkdir(f"../results/{dataset_name}")
 
     if not os.path.exists(f"../results/{dataset_name}/plots"):
         os.mkdir(f"../results/{dataset_name}/plots")
