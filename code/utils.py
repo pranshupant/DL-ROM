@@ -110,9 +110,12 @@ def save_loss(loss, dataset_name):
 
 def find_weight(dataset_name):
 
-    d = np.load(f'../results/{dataset_name}/weights/val_loss_dict.npy', allow_pickle=True).item()
+    try:
+        d = np.load(f'../results/{dataset_name}/weights/val_loss_dict.npy', allow_pickle=True).item()
 
-    test_epoch = min(d.items(), key=lambda x: x[1])[0]
+        test_epoch = min(d.items(), key=lambda x: x[1])[0]
+    except:
+        test_epoch = 100
 
     PATH = f'../results/{dataset_name}/weights/{test_epoch}.pth'
     return PATH
