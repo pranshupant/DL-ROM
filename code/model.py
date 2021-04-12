@@ -77,8 +77,8 @@ class AE_3D_Dataset(data.Dataset):
         if name == 'SST':
             input = input[:,10:-10,20:-20]
 
-        self.input = input[:-10]
-        self.target = input[10:]
+        self.input = input[:-100]
+        self.target = input[100:]
         self.transform = transform
         self.hashmap = {i:range(i, i+100, 10) for i in range(self.input.shape[0] - 100)}
         print(len(self.hashmap))
