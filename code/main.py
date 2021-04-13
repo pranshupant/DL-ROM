@@ -15,7 +15,7 @@ import warnings
 import pdb
 
 '''
-python main.py 100 32 -d_set 2d_cylinder --train/ --test
+python main.py 100 32 -d_set 2d_cylinder --train/ --test -test_epoch 
 '''
 
 if __name__ == '__main__':
@@ -25,13 +25,17 @@ if __name__ == '__main__':
     parser.add_argument(dest='num_epochs', type=int, help="Number of Epochs")
     parser.add_argument(dest='batch_size', type=int, default=16, help="Batch Size")
     parser.add_argument('-d_set', dest='dataset', type=str, default='2d_cylinder', help="Name of Dataset")
+    parser.add_argument('-test_epoch', dest='test_epoch', type=int, default=None, help="Epoch for testing")
     parser.add_argument('--test', dest='testing', action='store_true')
     parser.add_argument('--train', dest='training', action='store_true')
+    parser.add_argument('--transfer', dest='transfer', action='store_true')
 
     args = parser.parse_args()
     num_epochs = args.num_epochs
     batch_size = args.batch_size
     dataset_name = args.dataset
+    test_epoch = args.test_epoch
+    transfer_learning = args.transfer
 
     print(num_epochs, batch_size)
 
@@ -42,8 +46,6 @@ if __name__ == '__main__':
     if not os.path.exists(f'../results/{dataset_name}/output/'):
         os.mkdir(f'../results/{dataset_name}/output/')
 
-    # if not os.path.exists("../input"):
-    #     os.mkdir("../input")
 
     if not os.path.exists(f'../results/{dataset_name}/weights/'):
         os.mkdir(f'../results/{dataset_name}/weights/')
@@ -65,20 +67,12 @@ if __name__ == '__main__':
         u = np.load('../data/sea_surface_noaa.npy',allow_pickle=True)[:2000, ...]
 
     elif dataset_name == '2d_cylinder_CFD':
-        # u = np.load('../data/Velocity160.npz', allow_pickle=True)
+        u_comp = np.load('../data/Vort100.npz', allow_pickle=True)
         # u_comp = np.load('../data/Velocity160.npz', allow_pickle=True)
-        # u_flat = u_comp['arr_0']
-        # u = u_flat.reshape(u_flat.shape[0], 320, 80)
-        # u = np.transpose(u, (0, 2, 1))
-        # omega = np.load('../data/Vort160.npz', allow_pickle=True)
-
-        u_comp = np.load('../data/Velocity160.npz', allow_pickle=True)
+        
         u_flat = u_comp['arr_0']
         u = u_flat.reshape(u_flat.shape[0], 320, 80)
-        u = np.transpose(u, (0, 2, 1))
-        u_new = np.zeros((u.shape[0], 80, 640))
-        u_new[..., :320] = u
-        u = u_new.astype(np.float32)
+        u = np.transpose(u, (0, 2, 1)).astype(np.float32)
         
     else: 
         print('Dataset Not Found')
@@ -107,10 +101,9 @@ if __name__ == '__main__':
         # transforms.Normalize([0.5], [0.5])
     ])
 
-    #Loading Model
-    TL = False
     
-    if TL:
+    if transfer_learning:
+        print('Using Transfer Learning')
         final_model = LSTM()
         pretrained = autoencoder()
         PATH = "../weights/1000.pth"
@@ -156,10 +149,10 @@ if __name__ == '__main__':
             train_loss = training(model,train_loader,criterion,optimizer)
             
             #Saving weights after every 20epochs
-            if epoch%20==0:# and epoch !=0:
+            if epoch%10==0:# and epoch !=0:
                 val_loss[epoch] = validation(model,val_loader,criterion)
 
-            if epoch%20==0:# and epoch != 0:
+            if epoch%10==0:# and epoch != 0:
                 path=f'../results/{dataset_name}/weights/{epoch}.pth'
                 torch.save(model.state_dict(),path)
                 print(optimizer)
@@ -174,7 +167,7 @@ if __name__ == '__main__':
 
     if args.testing:
 
-        PATH = find_weight(dataset_name)
+        PATH = find_weight(dataset_name, test_epoch)
 
         print(PATH)
 

@@ -108,21 +108,23 @@ def conv3D_shape(input_shape, kernel, stride, padding=(0,0,0), dilation=(1,1,1))
 def save_loss(loss, dataset_name):
     np.save(f'../results/{dataset_name}/weights/val_loss_dict.npy', loss)
 
-def find_weight(dataset_name):
+def find_weight(dataset_name, test_epoch=None):
 
-    try:
-        d = np.load(f'../results/{dataset_name}/weights/val_loss_dict.npy', allow_pickle=True).item()
+    if test_epoch is None:
 
-        test_epoch = min(d.items(), key=lambda x: x[1])[0]
-    except:
-        test_epoch = 100
+        try:
+            d = np.load(f'../results/{dataset_name}/weights/val_loss_dict.npy', allow_pickle=True).item()
+
+            test_epoch = min(d.items(), key=lambda x: x[1])[0]
+        except:
+            test_epoch = 100
 
     PATH = f'../results/{dataset_name}/weights/{test_epoch}.pth'
     return PATH
 
 if __name__ == '__main__':
 
-    input_dim = torch.randn(10, 450, 150)
+    input_dim = torch.randn(10, 80, 640)
     print(input_dim.shape)
-    out = conv3D_shape(input_shape=input_dim.shape,kernel=(3,5,3),stride=(1,3,1),padding=(1,2,1))
+    out = conv3D_shape(input_shape=input_dim.shape, kernel=(3, 3, 16), stride=(1, 1, 8), padding=(0, 1, 4))
     print(out)

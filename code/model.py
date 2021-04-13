@@ -77,8 +77,8 @@ class AE_3D_Dataset(data.Dataset):
         if name == 'SST':
             input = input[:,10:-10,20:-20]
 
-        self.input = input[:-100]
-        self.target = input[100:]
+        self.input = input[:-10]
+        self.target = input[10:]
         self.transform = transform
         self.hashmap = {i:range(i, i+100, 10) for i in range(self.input.shape[0] - 100)}
         print(len(self.hashmap))
@@ -665,7 +665,7 @@ class UNet_3D(nn.Module):
         self.name=name
 
         if name=='2d_cylinder':
-            d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
+            d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
             u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #190,360
         
         elif name=='boussinesq':
@@ -683,8 +683,8 @@ class UNet_3D(nn.Module):
             u5=Upsample_3d(32,1,(3,4,4),stride=(1,2,4),padding=(0,1,0))
 
         elif name=='2d_cylinder_CFD':
-            d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
-            u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #190,360
+            d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #16,80,80
+            u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #190,360
             
         elif name=='Channel_flow':
             print(f'To be implemented')
@@ -701,7 +701,7 @@ class UNet_3D(nn.Module):
         self.d4=Downsample_3d(64, 128, (3, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #10
         self.d5=Downsample_3d(128, 256, (2, 4, 4) ,stride=(1, 2, 2), padding=(0, 1, 1)) #5
 
-        self.h = 10
+        self.h = 32
         self.down = nn.Linear(256*5*5, self.h)
         self.up = nn.Linear(self.h, 256*5*5)
 

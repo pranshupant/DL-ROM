@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 
-#  python visualize.py -d_set 2d_cylinder -freq 50
+'''
+python visualize.py -d_set 2d_cylinder -freq 10
+'''
 
 def plot_results(pred, labels, dataset_name, freq):
     assert(pred.shape == labels.shape)
@@ -17,6 +19,10 @@ def plot_results(pred, labels, dataset_name, freq):
         plt.imshow(labels[i], cmap= 'RdBu')
         plt.axis('off')
         plt.savefig(f"../results/{dataset_name}/plots/{i}_label.png", bbox_inches='tight',  dpi=600)
+
+        plt.imshow(pred[i]-labels[i], cmap= 'gist_gray')
+        plt.axis('off')
+        plt.savefig(f"../results/{dataset_name}/plots/{i}_diff.png", bbox_inches='tight',  dpi=600)
 
 if __name__ == '__main__':
 
