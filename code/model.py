@@ -74,8 +74,8 @@ class LSTM_Dataset(data.Dataset):
 
 class AE_3D_Dataset(data.Dataset):
     def __init__(self, input, name='2d_cylinder', transform=None):
-        if name == 'SST':
-            input = input[:,10:-10,20:-20]
+        # if name == 'SST':
+        #     input = input[:,10:-10,20:-20]
 
         self.input = input[:-10]
         self.target = input[10:]
@@ -664,27 +664,22 @@ class UNet_3D(nn.Module):
         super(UNet_3D, self).__init__()
         self.name=name
 
-        if name=='2d_cylinder':
-            d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #16,80,80
-            u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 8), padding=(0, 1, 0)) #190,360
+        if name=='2d_cylinder_CFD' or name=='2d_cylinder':
+            d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #16,80,80
+            u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #190,360
         
         elif name=='boussinesq':
-            d1=nn.Sequential(
-                Downsample_3d(1,8,(3,5,3),stride=(1,3,1),padding=(1,2,1)),
-                Downsample_3d(8,16,(3,3,3),stride=(1,2,2),padding=(0,6,6))
-            )
-            u5 = Upsample_3d(32,8,(3,3,4),stride=(1,2,2),padding=(0,6,6))
-            u6 = nn.ConvTranspose3d(8,1,(3,6,3),stride=(1,3,1),padding=(1,0,1))
-            self.u6=u6
+            d1= Downsample_3d(1,16,(3,8,4),stride=(1,4,2),padding=(0,2,1))
+            u5 = Upsample_3d(32,1,(3,8,4),stride=(1,4,2),padding=(0,2,1))
+            # u6 = nn.ConvTranspose3d(8,1,(3,6,3),stride=(1,3,1),padding=(1,0,1))
+            # self.u6=u6
 
         elif name=='SST':
             #Note - Remember to crop in dataloader
-            d1=Downsample_3d(1, 16, (3, 4, 4), stride=(1, 2, 4), padding=(0, 1, 0))
-            u5=Upsample_3d(32,1,(3,4,4),stride=(1,2,4),padding=(0,1,0))
+            d1=Downsample_3d(1, 16, (3, 4, 8), stride=(1, 2, 4), padding=(0, 1, 2))
+            u5=Upsample_3d(32,1,(3,4,8),stride=(1,2,4),padding=(0,1,2))
 
-        elif name=='2d_cylinder_CFD':
-            d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #16,80,80
-            u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #190,360
+
             
         elif name=='Channel_flow':
             print(f'To be implemented')
@@ -734,11 +729,11 @@ class UNet_3D(nn.Module):
         up3=self.u3(down3,up2)
         up4=self.u4(down2,up3)
         
-        if self.name=='boussinesq':
-            out= self.u5(down1,up4)
-            out =self.u6(out)
+        # if self.name=='boussinesq':
+        #     out= self.u5(down1,up4)
+        #     out =self.u6(out)
 
-        else:
-            out = self.u5(down1,up4,last=True)
+        # else:
+        out = self.u5(down1,up4,last=True)
 
         return out

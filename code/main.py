@@ -10,9 +10,10 @@ import time
 import torchvision
 from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D,UNet_3D
 from train import training, validation, test
-from utils import load_transfer_learning, insert_time_channel, find_weight, save_loss
+from utils import load_transfer_learning, insert_time_channel, find_weight, save_loss, normalize_data, MSE
 import warnings
 import pdb
+import cv2
 
 '''
 python main.py 100 32 -d_set 2d_cylinder --train/ --test -test_epoch 
@@ -56,15 +57,19 @@ if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     if dataset_name == '2d_cylinder':
-        u = np.load('../data/cylinder_u.npy', allow_pickle=True)[:-1, ...]
-        v = np.load('../data/cylinder_v.npy', allow_pickle=True)[:-1, ...]
+        u = np.load('../data/cylinder_u.npy', allow_pickle=True)[:-1, ...][:,:,40:-280]
+        u = normalize_data(u)
+        # v = np.load('../data/cylinder_v.npy', allow_pickle=True)[:-1, ...]
 
     elif dataset_name == 'boussinesq':
-        u = np.load('../data/boussinesq_u.npy', allow_pickle=True)[:-1, ...]
-        v = np.load('../data/boussinesq_v.npy', allow_pickle=True)[:-1, ...]
+        ux = np.load('../data/boussinesq_u.npy', allow_pickle=True)[:-1, ...][:,50:-80,:]
+        u = np.array([cv2.resize(ux[i], (160,320), interpolation=cv2.INTER_CUBIC) for i in range(ux.shape[0])])
+        u = normalize_data(u)
+        # v = np.load('../data/boussinesq_v.npy', allow_pickle=True)[:-1, ...]
 
     elif dataset_name == 'SST':
-        u = np.load('../data/sea_surface_noaa.npy',allow_pickle=True)[:2000, ...]
+        u = np.load('../data/sea_surface_noaa.npy',allow_pickle=True)[:2000, ...][:,10:-10,20:-20]
+        u = normalize_data(u)
 
     elif dataset_name == '2d_cylinder_CFD':
         u_comp = np.load('../data/Vort100.npz', allow_pickle=True)
@@ -73,6 +78,7 @@ if __name__ == '__main__':
         u_flat = u_comp['arr_0']
         u = u_flat.reshape(u_flat.shape[0], 320, 80)
         u = np.transpose(u, (0, 2, 1)).astype(np.float32)
+        u = normalize_data(u)
         
     else: 
         print('Dataset Not Found')
@@ -134,7 +140,7 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=0.05)
         criterion = nn.L1Loss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
-                        factor=0.5, patience=2, verbose=False, 
+                        factor=0.1, patience=2, verbose=False, 
                         threshold=1e-3, threshold_mode='rel', 
                             cooldown=5, min_lr=1e-5, eps=1e-08)
 
@@ -183,3 +189,6 @@ if __name__ == '__main__':
 
         name=f'../results/{dataset_name}/output/predictions.npy'
         np.save(name, preds)
+
+        MSE(dataset_name, preds, labels)
+        

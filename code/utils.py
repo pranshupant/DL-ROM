@@ -117,14 +117,24 @@ def find_weight(dataset_name, test_epoch=None):
 
             test_epoch = min(d.items(), key=lambda x: x[1])[0]
         except:
-            test_epoch = 100
+            test_epoch = 0
 
     PATH = f'../results/{dataset_name}/weights/{test_epoch}.pth'
     return PATH
 
+def normalize_data(u):
+    u = 2*(u-np.min(u))/(np.max(u)-np.min(u))-1
+    return u
+
+def MSE(dataset_name, pred, target):
+    mse=np.sum((target-pred)**2)/(pred.shape[0]*pred.shape[1]*pred.shape[2])
+    print(mse)
+    np.save(f'../results/{dataset_name}/MSE.npy',mse)
+
+
 if __name__ == '__main__':
 
-    input_dim = torch.randn(10, 80, 640)
+    input_dim = torch.randn(10, 320, 160)
     print(input_dim.shape)
-    out = conv3D_shape(input_shape=input_dim.shape, kernel=(3, 3, 16), stride=(1, 1, 8), padding=(0, 1, 4))
+    out = conv3D_shape(input_dim.shape, (3,8,4),stride=(1,4,2),padding=(0,2,1))
     print(out)
