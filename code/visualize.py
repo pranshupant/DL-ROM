@@ -29,7 +29,7 @@ def MSE_barplot():
     mse_values = []
     xticks = []
 
-    datasets= ['2d_cylinder', 'boussinesq', '2d_cylinder_cfd','SST','channel_flow']
+    datasets= ['2d_cylinder', 'boussinesq', '2d_cylinder_CFD','SST','channel_flow']
 
     for i in datasets:
         try:
@@ -54,8 +54,9 @@ def MSE_barplot():
     rects1 = ax.bar(ind, mse_values,width,color='blue',error_kw=dict(lw=1),capsize=2)
     ww = 0.16
     ax.set_ylabel('MSE per pixel', fontsize=10)
-    plt.xticks(ind,xticks,rotation=0, fontsize = 8)
+    plt.xticks(ind,xticks,rotation=0, fontsize = 4)
     plt.yticks(fontsize = 12)
+    plt.ylim((0,12))
     plt.xlabel('DL-ROM', fontsize=10)
     def autolabel(rects):
         for rect in rects:
