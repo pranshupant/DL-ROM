@@ -87,6 +87,56 @@ def MSE_barplot():
     filename = '../results/MSE_barplot.png'
     fig.savefig(filename, bbox_inches = 'tight')
 
+def MSE_barplot():
+
+    mse_values = []
+    xticks = []
+
+    datasets= ['2d_cylinder', 'boussinesq', '2d_cylinder_CFD','SST','channel_flow']
+
+    for i in datasets:
+        try:
+            mse=np.load(f'../results/{i}/MSE.npy')
+            print(mse)
+            mse_values.append(-1*np.log(mse))
+            xticks.append(i)
+        except:
+            print(f'MSE for {i} not found')
+    
+    N = len(mse_values)            #number of the bars 
+    ind = np.arange(N)  # the x locations for the groups
+
+    fig = plt.figure(figsize = [4,3], dpi = 600)
+    width = 0.35
+    ax = plt.gca()
+    for axis in ['top','bottom','left','right']:
+        ax.spines[axis].set_linewidth(width)
+    tick_width = 0.35
+    plt.tick_params(direction = 'in', width = tick_width)
+
+    rects1 = ax.bar(ind, mse_values,width,color='blue',error_kw=dict(lw=1),capsize=2)
+    ww = 0.16
+    ax.set_ylabel('MSE per pixel', fontsize=10)
+    plt.xticks(ind,xticks,rotation=0, fontsize = 4)
+    plt.yticks(fontsize = 12)
+    plt.ylim((0,12))
+    plt.xlabel('DL-ROM', fontsize=10)
+    def autolabel(rects):
+        for rect in rects:
+            h = rect.get_height()
+            ax.text(rect.get_x()+rect.get_width()/2., 1.003*h, '%.2f'%float(h),
+                    ha='center', va='bottom',fontsize=8)
+    for axis in ['top','bottom','left','right']:
+        ax.spines[axis].set_linewidth(2)
+    plt.tick_params(direction = 'in', width = 1.5)
+
+    autolabel(rects1)
+
+    plt.show()
+    filename = '../results/MSE_barplot.png'
+    fig.savefig(filename, bbox_inches = 'tight')
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
