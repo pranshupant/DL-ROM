@@ -9,14 +9,14 @@ import argparse
 import time
 import torchvision
 from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D,UNet_3D
-from train import training, validation, test
+from train import training, validation, test, simulate
 from utils import load_transfer_learning, insert_time_channel, find_weight, save_loss, normalize_data, MSE
 import warnings
 import pdb
 import cv2
 
 '''
-python main.py 100 32 -d_set 2d_cylinder --train/ --test -test_epoch 
+python main.py 100 32 -d_set 2d_cylinder --train/ --transfer/ --simulate --test/ -test_epoch 
 '''
 
 if __name__ == '__main__':
@@ -30,6 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--test', dest='testing', action='store_true')
     parser.add_argument('--train', dest='training', action='store_true')
     parser.add_argument('--transfer', dest='transfer', action='store_true')
+    parser.add_argument('--simulate', dest='simulate', action='store_true')
 
     args = parser.parse_args()
     num_epochs = args.num_epochs
@@ -40,16 +41,24 @@ if __name__ == '__main__':
 
     print(num_epochs, batch_size)
 
+    if not os.path.exists(f'../results'):
+        os.mkdir(f'../results')
+
     if not os.path.exists(f'../results/{dataset_name}'):
         os.mkdir(f'../results/{dataset_name}')
+
+    if not os.path.exists(f'../simulate'):
+        os.mkdir(f'../simulate')
 
     #Making folders to save reconstructed images, input images and weights
     if not os.path.exists(f'../results/{dataset_name}/output/'):
         os.mkdir(f'../results/{dataset_name}/output/')
 
-
     if not os.path.exists(f'../results/{dataset_name}/weights/'):
         os.mkdir(f'../results/{dataset_name}/weights/')
+
+    if not os.path.exists(f'../simulate/{dataset_name}'):
+        os.mkdir(f'../simulate/{dataset_name}')
 
     warnings.filterwarnings('ignore')
 
@@ -80,6 +89,24 @@ if __name__ == '__main__':
         u = np.transpose(u, (0, 2, 1)).astype(np.float32)
         u = normalize_data(u)
         
+    elif dataset_name=='channel_flow':
+        u = np.load('../data/channel_data_2500.npy', allow_pickle=True).astype(np.float32)
+        u = normalize_data(u)
+
+    elif dataset_name == '2d_airfoil':
+        u_flat = np.load('../data/airfoil_80x320_data.npy', allow_pickle=True)
+        print(u_flat.shape)
+        u = u_flat.reshape(u_flat.shape[0], 320, 80)
+        u = np.transpose(u, (0, 2, 1))[:,:,140:-20].astype(np.float32)
+        u = normalize_data(u)
+
+    elif dataset_name == '2d_plate':
+        u_flat = np.load('../data/platekepsilon.npy', allow_pickle=True)
+        print(u_flat.shape)
+        u = u_flat.reshape(u_flat.shape[0], 360, 180)
+        u = np.transpose(u, (0, 2, 1))[:,:-20,:-40].astype(np.float32)
+        u = normalize_data(u)
+
     else: 
         print('Dataset Not Found')
         
@@ -87,7 +114,7 @@ if __name__ == '__main__':
     print(f'Data Loaded in Dataset: {dataset_name} with shape {u.shape[0]}')
 
     #train/val split
-    train_to_val = 0.85
+    train_to_val = 0.75
     # rand_array = np.random.permutation(1500)
     # print(rand_array)
 
@@ -140,7 +167,7 @@ if __name__ == '__main__':
         optimizer = optim.Adam(model.parameters(), lr=0.05)
         criterion = nn.L1Loss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
-                        factor=0.1, patience=2, verbose=False, 
+                        factor=0.5, patience=2, verbose=False, 
                         threshold=1e-3, threshold_mode='rel', 
                             cooldown=5, min_lr=1e-5, eps=1e-08)
 
@@ -191,4 +218,22 @@ if __name__ == '__main__':
         np.save(name, preds)
 
         MSE(dataset_name, preds, labels)
+
+    if args.simulate:
+
+        PATH = find_weight(dataset_name, test_epoch)
+
+        print(PATH)
+
+        model.load_state_dict(torch.load(PATH))
+
+        labels, preds, mse = simulate(model, u_validation, img_transform)
+        name=f'../simulate/{dataset_name}/labels.npy'          
+        np.save(name, labels)
+
+        name=f'../simulate/{dataset_name}/predictions.npy'
+        np.save(name, preds)
+
+        name=f'../simulate/{dataset_name}/mse.npy'
+        np.save(name, mse)
         

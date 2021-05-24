@@ -667,6 +667,10 @@ class UNet_3D(nn.Module):
         if name=='2d_cylinder_CFD' or name=='2d_cylinder':
             d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #16,80,80
             u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #190,360
+
+        if name=='2d_airfoil':
+            d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 2), padding=(0, 1, 1)) #16,80,80
+            u5=Upsample_3d(32, 1, (3, 3, 4), stride=(1, 1, 2), padding=(0, 1, 1)) #190,360
         
         elif name=='boussinesq':
             d1= Downsample_3d(1,16,(3,8,4),stride=(1,4,2),padding=(0,2,1))
@@ -674,20 +678,17 @@ class UNet_3D(nn.Module):
             # u6 = nn.ConvTranspose3d(8,1,(3,6,3),stride=(1,3,1),padding=(1,0,1))
             # self.u6=u6
 
-        elif name=='SST':
+        elif name=='SST' or name=='2d_plate':
             #Note - Remember to crop in dataloader
             d1=Downsample_3d(1, 16, (3, 4, 8), stride=(1, 2, 4), padding=(0, 1, 2))
             u5=Upsample_3d(32,1,(3,4,8),stride=(1,2,4),padding=(0,1,2))
-
-
             
-        elif name=='Channel_flow':
-            print(f'To be implemented')
-        
+        elif name=='channel_flow':
+            d1=Downsample_3d(1, 16, (3, 8, 3), stride=(1, 4, 1), padding=(0, 2, 1)) #16,80,80
+            u5=Upsample_3d(32, 1, (3, 8, 3), stride=(1, 4, 1), padding=(0, 2, 1)) #190,360
+
         else:
             print(f'Dataset Not Defined')
-
-
 
 
         self.d1=d1

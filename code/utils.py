@@ -131,6 +131,12 @@ def MSE(dataset_name, pred, target):
     print(mse)
     np.save(f'../results/{dataset_name}/MSE.npy',mse)
 
+def MSE_simulate(pred, target):
+    mse=np.sum((target-pred)**2)/(pred.shape[0]*pred.shape[1])
+    # print(mse)
+    return mse
+
+
 
 if __name__ == '__main__':
 

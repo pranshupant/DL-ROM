@@ -5,7 +5,7 @@ import numpy as np
 import time
 import torchvision
 from tqdm import tqdm
-from utils import to_img 
+from utils import to_img, MSE_simulate
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -87,7 +87,42 @@ def test(model, test_loader):
 
     return np.array(label), np.array(out)
 
+def simulate(model, u_valid, transform):
+    '''
+    Validation for  one epoch of the model  
 
+    return: Validation loss of one epoch
+    '''
+    model.eval()
+    out = []
+    label = []
+    mse = []
+
+    context = [i for i in u_valid[0:100:10]]
+
+    for epoch in range((u_valid.shape[0]-100)//10):
+        print(f"Epoch: {epoch}")
+        inp = np.array(context)
+
+        # inp=torch.from_numpy(inp)
+        inp = transform(inp)
+        inp=inp.permute(1, 2, 0)
+        inp=inp.unsqueeze(0).unsqueeze(0)
+        # print(inp.shape)
+
+        feats = inp.to(device)
+
+        outputs=model(feats)
+        op = outputs[0, 0, -1].detach().cpu().numpy()
+        context.append(op) ## Moudularize
+        out.append(op)
+        label.append(u_valid[100 + (10*epoch)])
+        mse.append(MSE_simulate(op, u_valid[100 + (10*epoch)]))
+        context.pop(0)
+
+        del feats
+
+    return np.array(label), np.array(out), np.array(mse)
 
 
 
