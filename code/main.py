@@ -16,16 +16,16 @@ import pdb
 import cv2
 
 '''
-python main.py 100 32 -d_set 2d_cylinder --train/ --transfer/ --simulate --test/ -test_epoch 
+python main.py -N 100 -B 32 -d_set 2d_cylinder_CFD --train/ --transfer/ --simulate --test/ -test_epoch 
 '''
 
 if __name__ == '__main__':
 
     #arguments for num_epochs and batch_size
     parser = argparse.ArgumentParser()
-    parser.add_argument(dest='num_epochs', type=int, help="Number of Epochs")
-    parser.add_argument(dest='batch_size', type=int, default=16, help="Batch Size")
-    parser.add_argument('-d_set', dest='dataset', type=str, default='2d_cylinder', help="Name of Dataset")
+    parser.add_argument('-N',dest='num_epochs', type=int, help="Number of Epochs")
+    parser.add_argument('-B', dest='batch_size', type=int, default=16, help="Batch Size")
+    parser.add_argument('-d_set', dest='dataset', type=str, default='2d_cylinder_CFD', help="Name of Dataset")
     parser.add_argument('-test_epoch', dest='test_epoch', type=int, default=None, help="Epoch for testing")
     parser.add_argument('--test', dest='testing', action='store_true')
     parser.add_argument('--train', dest='training', action='store_true')

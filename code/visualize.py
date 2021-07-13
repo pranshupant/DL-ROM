@@ -92,7 +92,7 @@ def MSE_barplot():
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d_set', dest='dset', type=str, default='2d_cylinder', help="Name of Dataset")
+    parser.add_argument('-d_set', dest='dset', type=str, default='2d_cylinder_CFD', help="Name of Dataset")
     parser.add_argument('-freq', dest='freq', type=int, default=20, help="Frequency for saving plots")
     parser.add_argument('-mode', dest='mode', type=str, help="result/simulate")
     parser.add_argument('--MSE', dest='barplot', action='store_true')
