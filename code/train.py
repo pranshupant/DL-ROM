@@ -76,15 +76,16 @@ def test(model, test_loader):
     for batch_num, (feats, labels) in tqdm(enumerate(test_loader), total=len(test_loader), ascii=True):
         feats = feats.to(device)
 
+        start_time = time.perf_counter_ns()
         outputs=model(feats)
+        end_time = time.perf_counter_ns()
         out.append(outputs[0, 0, -1].detach().cpu().numpy()) ## Moudularize
         label.append(labels[0, 0, -1].numpy())
         # print(labels[0, 0, -1].numpy().shape)
         # print(outputs[0, 0, -1].detach().cpu().numpy().shape)
-
         del feats
         del labels
-
+    print("Model Evaluation Time: {:.2f} ms".format((end_time-start_time)*1e-6))
     return np.array(label), np.array(out)
 
 def simulate(model, u_valid, transform):

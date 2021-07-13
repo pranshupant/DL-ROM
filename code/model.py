@@ -664,11 +664,11 @@ class UNet_3D(nn.Module):
         super(UNet_3D, self).__init__()
         self.name=name
 
-        if name=='2d_cylinder_CFD' or name=='2d_cylinder':
+        if name=='2d_cylinder_CFD' or name=='2d_cylinder' or name=='2d_sq_cyl':
             d1=Downsample_3d(1, 16, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #16,80,80
             u5=Upsample_3d(32, 1, (3, 3, 8), stride=(1, 1, 4), padding=(0, 1, 2)) #190,360
 
-        if name=='2d_airfoil':
+        elif name=='2d_airfoil':
             d1=Downsample_3d(1, 16, (3, 3, 4), stride=(1, 1, 2), padding=(0, 1, 1)) #16,80,80
             u5=Upsample_3d(32, 1, (3, 3, 4), stride=(1, 1, 2), padding=(0, 1, 1)) #190,360
         

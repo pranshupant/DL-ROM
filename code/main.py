@@ -10,7 +10,7 @@ import time
 import torchvision
 from model import MyDataset, MLP_Dataset, LSTM_Dataset, autoencoder, autoencoder_B, MLP, Unet, LSTM, LSTM_B, AE_3D_Dataset, autoencoder_3D,UNet_3D
 from train import training, validation, test, simulate
-from utils import load_transfer_learning, insert_time_channel, find_weight, save_loss, normalize_data, MSE
+from utils import load_transfer_learning, insert_time_channel, find_weight, load_transfer_learning_UNet_3D, save_loss, normalize_data, MSE, plot_training
 import warnings
 import pdb
 import cv2
@@ -88,6 +88,12 @@ if __name__ == '__main__':
         u = u_flat.reshape(u_flat.shape[0], 320, 80)
         u = np.transpose(u, (0, 2, 1)).astype(np.float32)
         u = normalize_data(u)
+
+    elif dataset_name == '2d_sq_cyl':
+        u_flat = np.load('../data/sq_cyl_vort.npy', allow_pickle=True)#sq_cyl_vel
+        u = u_flat.reshape(u_flat.shape[0], 320, 80)
+        u = np.transpose(u, (0, 2, 1)).astype(np.float32)[:2000, ...] #temporarily reducing dataset size
+        u = normalize_data(u)
         
     elif dataset_name=='channel_flow':
         u = np.load('../data/channel_data_2500.npy', allow_pickle=True).astype(np.float32)
@@ -137,12 +143,19 @@ if __name__ == '__main__':
     
     if transfer_learning:
         print('Using Transfer Learning')
-        final_model = LSTM()
-        pretrained = autoencoder()
-        PATH = "../weights/1000.pth"
-        # PATH = "../weights/bous_500.pth"
-        # pdb.set_trace()
-        model = load_transfer_learning(pretrained, final_model, PATH)
+        # final_model = LSTM()
+        # pretrained = autoencoder()
+        # PATH = "../weights/1000.pth"
+        # # PATH = "../weights/bous_500.pth"
+        # # pdb.set_trace()
+        pre_dataset_name = "2d_cylinder_CFD"
+        final_dataset_name = dataset_name
+        final_model = UNet_3D(name=final_dataset_name)
+        pretrained = UNet_3D(name=pre_dataset_name)
+
+        PATH = f"../results/{pre_dataset_name}/weights/100.pth"
+    
+        model = load_transfer_learning_UNet_3D(pretrained, final_model, PATH, req_grad=False)
     else:
         model = UNet_3D(name=dataset_name)
 
@@ -174,7 +187,13 @@ if __name__ == '__main__':
         # model.load_state_dict(torch.load(Path))
         # print(optimizer)
 
-        val_loss = {}
+        Train_Loss = []
+        Dev_Loss = []
+
+        Val_loss = {}
+        Train_loss = {}
+
+        validation_freq = 1
         #Epoch loop
         for epoch in range(num_epochs):
             start_time=time.time()
@@ -182,8 +201,13 @@ if __name__ == '__main__':
             train_loss = training(model,train_loader,criterion,optimizer)
             
             #Saving weights after every 20epochs
-            if epoch%10==0:# and epoch !=0:
-                val_loss[epoch] = validation(model,val_loader,criterion)
+            if epoch%validation_freq==0:# and epoch !=0:
+                val_loss = validation(model,val_loader,criterion)
+                Val_loss[epoch] = val_loss
+                Dev_Loss.append(val_loss)
+
+                Train_Loss.append(train_loss)
+                Train_loss[epoch] = train_loss
 
             if epoch%10==0:# and epoch != 0:
                 path=f'../results/{dataset_name}/weights/{epoch}.pth'
@@ -195,7 +219,10 @@ if __name__ == '__main__':
             print('='*100)
             print()
 
-        save_loss(val_loss, dataset_name)
+        # Saving Loss values as dictionaries for later analyses
+        save_loss(Train_loss, dataset_name, 'train')
+        save_loss(Val_loss, dataset_name, 'val')        
+        plot_training(Train_Loss, Dev_Loss)
 
 
     if args.testing:
