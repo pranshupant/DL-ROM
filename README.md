@@ -1,5 +1,6 @@
 # DL-ROM : Deep Learning for Reduced Order Modelling 
-
+<span align="center"><img src="Images/DL_POF_2.gif" alt="">
+</span>
 ## Overview
 
 This repository contains the implementation of DL-ROM: [Deep Learning for Reduced Order Modelling and Efficient Temporal Evolution of Fluid Simulations](http://arxiv.org/abs/2107.04556)
@@ -31,10 +32,7 @@ $ cd DL-ROM/
 ## Download Datasets
 Downloads the 5 datasets used for the evaluation of the DL-ROM model
 
-```text
-$ cd data/
-$ ./download_data.sh
-```
+The data can be downloaded from the following Google Drive Link: https://drive.google.com/drive/folders/1JI4jTBM1vE9AjkdxYce0GCDG9tCi5FtQ?usp=sharing
 
 ## Running the Model
 
